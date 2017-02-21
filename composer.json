@@ -1,0 +1,21 @@
+{
+    "name": "rs/nview",
+    "description": "Laravel NView",
+    "minimum-stability": "dev",
+    "require": {
+        "php": "^7.0",
+        "illuminate/filesystem": "5.4.*",
+        "illuminate/view": "5.4.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "RS\\NView\\": "src"
+        }
+    },
+    "authors": [
+        {
+            "name": "Red Snapper Development Team",
+            "email": "contact@redsnapper.net"
+        }
+    ]
+}
