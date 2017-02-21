@@ -26,7 +26,10 @@ class NViewServiceProvider extends ServiceProvider {
 	 */
 	public function registerFactory()
 	{
-		$this->app->singleton(Factory::class, function ($app) {
+
+		$this->app->alias('nview', Factory::class);
+
+		$this->app->singleton('nview', function ($app) {
 
 			$finder = $app['nview.finder'];
 
@@ -41,6 +44,8 @@ class NViewServiceProvider extends ServiceProvider {
 
 			return $env;
 		});
+
+
 	}
 
 	/**
@@ -52,6 +57,10 @@ class NViewServiceProvider extends ServiceProvider {
 		$this->app->bind('nview.finder', function ($app) {
 			return new FileViewFinder($app['files'], $app['config']['view.paths'],['xml']);
 		});
+	}
+
+	public function registerHelpers(){
+
 	}
 
 }
