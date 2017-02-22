@@ -4,12 +4,10 @@
 namespace RS\NView;
 
 use Exception;
-use Illuminate\Contracts\Support\Renderable;
-use Illuminate\Contracts\Translation\Translator;
 
 mb_internal_encoding('UTF-8');
 
-class NView implements Renderable {
+class NView {
 
 	const GAP_NONE = 1;
 	const GAP_FOLLOWING = 2;
@@ -20,13 +18,12 @@ class NView implements Renderable {
 
 	private $errs = '';
 	private $fname = null;
-	private $xp = null;
-	private $doc = null;
 
 	/**
-	 * @var Translator
+	 * @var \DOMXPath
 	 */
-	protected $translator;
+	private $xp = null;
+	private $doc = null;
 
 	/**
 	 * '__clone'
@@ -40,12 +37,10 @@ class NView implements Renderable {
 	/**
 	 * NView constructor.
 	 *
-	 * @param Translator $translator
 	 * @param string     $value
 	 */
-	public function __construct(Translator $translator,$value = '') {
+	public function __construct($value = '') {
 
-		$this->translator = $translator;
 
 		set_error_handler(array($this, 'doMsg'), E_ALL | E_STRICT);
 		try {
@@ -98,9 +93,6 @@ class NView implements Renderable {
 		return $retval;
 	}
 
-	public function render(){
-		return $this->show(true);
-	}
 
 	/**
 	 * 'text'
@@ -126,23 +118,7 @@ class NView implements Renderable {
 		return trim(preg_replace($ksub,'',$docstr));
 	}
 
-	/**
-	 * 'tset - translation hooks'
-	 */
-	private function tset() {
-		$tr_attrs = $this->get("//*[@data-tr]/@data-tr");
-		if ($tr_attrs instanceof \DOMNodeList) {
-			foreach ($tr_attrs as $na) {
-				$value = $na->value;
-				$this->set("//*[@data-tr='" . $value . "']/child-gap()", $this->translator->trans($value));
-				$this->set("//*[@data-tr='" . $value . "']/@data-tr");
-			}
-		} else { //just the one attribute..
-			/** @noinspection PhpToStringImplementationInspection */
-			$this->set("//*[@data-tr='" . $tr_attrs . "']/child-gap()", $this->translator->trans($tr_attrs));
-			$this->set("//*[@data-tr='" . $tr_attrs . "']/@data-tr");
-		}
-	}
+
 
 	/**
 	 * 'addNamespace'
@@ -626,8 +602,6 @@ class NView implements Renderable {
 	 * 'tidyView'
 	 */
 	private function tidyView() {
-		//attempt any remaining translations and remove final data-tr attributes.
-		$this->tset();
 		$this->doc->normalizeDocument();
 		$xq = "//*[not(node())][not(contains('[area|base|br|col|hr|img|input|link|meta|param|command|keygen|source]',local-name()))]";
 		$entries = $this->xp->query($xq);
