@@ -135,7 +135,7 @@ class Factory implements FactoryContract {
 	 * @return \Illuminate\Contracts\View\View
 	 */
 	protected function viewInstance($view, $path, $data) {
-		return new NViewController($view, $path, $data);
+		return new NViewController($this->translator,$view, $path, $data);
 	}
 
 	/**

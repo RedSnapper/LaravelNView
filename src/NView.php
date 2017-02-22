@@ -191,17 +191,27 @@ class NView {
 	}
 
 	/**
+	 * @param string $xpath
+	 * @param null   $ref
+	 * @return \DOMNodeList
+	 */
+	public function getList(string $xpath , $ref=null):\DOMNodeList{
+		if (!is_null($this->doc) && !is_null($this->xp)) {
+			return $this->xp->query($xpath,$ref);
+		}
+		return new \DOMNodeList();
+	}
+
+	/**
 	 * 'get'
 	 */
 	public function get($xpath, $ref=null) {
 		$retval = null;
 		if (!is_null($this->doc) && !is_null($this->xp)) {
 			set_error_handler(array($this,'doMsg'),E_ALL | E_STRICT);
-			if (is_null($ref)) {
-				$entries = $this->xp->query($xpath);
-			} else {
-				$entries = $this->xp->query($xpath,$ref);
-			}
+
+			$entries = $this->xp->query($xpath,$ref);
+
 			if ($entries) {
 				switch ($entries->length) {
 					case 1: {

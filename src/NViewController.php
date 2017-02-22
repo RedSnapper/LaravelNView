@@ -4,8 +4,16 @@ namespace RS\NView;
 
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Translation\Translator;
 
 class NViewController implements ViewContract {
+
+	/**
+	 * The translator
+	 *
+	 * @var Translator
+	 */
+	private $translator;
 
 	/**
 	 * The name of the view.
@@ -35,21 +43,27 @@ class NViewController implements ViewContract {
 	 */
 	protected $path;
 
+
 	/**
 	 * Create a new view instance.
 	 *
-	 * @param  string $viewName
-	 * @param  string $path
-	 * @param  mixed  $data
+	 * @param Translator $translator
+	 * @param  string    $viewName
+	 * @param  string    $path
+	 * @param  mixed     $data
 	 */
-	public function __construct(string $viewName, string $path, $data = []) {
+	public function __construct(Translator $translator,$viewName, string $path, $data = []) {
 		$this->view = new NView($path);
 		$this->viewName = $viewName;
 		$this->path = $path;
 		$this->data = $data instanceof Arrayable ? $data->toArray() : (array)$data;
+		$this->translator = $translator;
 	}
 
 	public function render() {
+		
+		$this->compileTranslations();
+
 		return $this->view->show(true);
 	}
 
@@ -72,6 +86,17 @@ class NViewController implements ViewContract {
 		}
 
 		return $this;
+	}
+
+	protected function compileTranslations(){
+		$nodes = $this->view->getList('//*[@data-v.tr]');
+
+		foreach ($nodes as $node){
+			$translation = $this->translator->trans(
+			  $node->getAttribute('data-v.tr')
+			);
+			$this->view->set('.',$translation,$node);
+		}
 	}
 
 }
