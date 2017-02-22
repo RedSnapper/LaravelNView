@@ -6,6 +6,7 @@ use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Support\Collection;
+use Illuminate\Container\Container;
 
 class NViewController implements ViewContract {
 
@@ -72,6 +73,7 @@ class NViewController implements ViewContract {
 
 		$collection = collect(array_dot($this->data));
 
+		$this->compileCan();
 		$this->compileChildGap($collection);
 		$this->compileText($collection);
 		$this->compileTranslations();
@@ -130,6 +132,19 @@ class NViewController implements ViewContract {
 			$this->view->set('.',$value,$node);
 		}
 	}
+
+	protected function compileCan() {
+
+		$nodes = $this->getNodesByToken('can');
+		foreach ($nodes as $node){
+			$attribute = $this->getNodeAttribute($node,'can');
+			$gate = Container::getInstance()->make('Gate');
+			if($gate::denies($attribute)){
+				$this->view->set('.',null,$node);
+			};
+		}
+	}
+
 
 	protected function getNodeAttribute(\DOMElement $node,$attribute){
 		return $node->getAttribute("{$this->prefix}{$attribute}");
@@ -201,5 +216,7 @@ class NViewController implements ViewContract {
 
 
 	}
+
+
 
 }

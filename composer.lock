@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "0d3c6910f4cc9c37a56b9699f4b1be72",
+    "content-hash": "b933f6bf512179570fcb8e12674a78ce",
     "packages": [
         {
             "name": "doctrine/inflector",
@@ -316,12 +316,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/illuminate/view.git",
-                "reference": "25a3f4a2398539ccb52006c82beb5d671f0f1539"
+                "reference": "0152506ccc2815e12e2daf8a01946b627db1efe0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/illuminate/view/zipball/25a3f4a2398539ccb52006c82beb5d671f0f1539",
-                "reference": "25a3f4a2398539ccb52006c82beb5d671f0f1539",
+                "url": "https://api.github.com/repos/illuminate/view/zipball/0152506ccc2815e12e2daf8a01946b627db1efe0",
+                "reference": "0152506ccc2815e12e2daf8a01946b627db1efe0",
                 "shasum": ""
             },
             "require": {
@@ -356,7 +356,7 @@
             ],
             "description": "The Illuminate View package.",
             "homepage": "https://laravel.com",
-            "time": "2017-02-20 16:49:15"
+            "time": "2017-02-22 15:30:41"
         },
         {
             "name": "paragonie/random_compat",
