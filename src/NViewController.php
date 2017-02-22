@@ -70,7 +70,10 @@ class NViewController implements ViewContract {
 
 	public function render() {
 
-		$this->compileChildGap();
+		$collection = collect(array_dot($this->data));
+
+		$this->compileChildGap($collection);
+		$this->compileText($collection);
 		$this->compileTranslations();
 
 		return $this->view->show(true);
@@ -108,31 +111,51 @@ class NViewController implements ViewContract {
 		}
 	}
 
-	protected function compileChildGap(){
+	protected function compileChildGap(Collection $data){
 		$nodes = $this->getNodesByToken('child');
 
-		$data = $this->data;
+		foreach ($nodes as $node){
+			$attribute = $this->getNodeAttribute($node,'child');
+			$value = $this->getValue($attribute,$data);
+			$this->view->set('./child-gap()',$value,$node);
+		}
+	}
 
-		$data = collect(array_dot($data));
+	protected function compileText(Collection $data){
+		$nodes = $this->getNodesByToken('text');
 
 		foreach ($nodes as $node){
-			$attribute = $node->getAttribute("{$this->prefix}child");
+			$attribute = $this->getNodeAttribute($node,'text');
+			$value = $this->getValue($attribute,$data);
+			$this->view->set('.',$value,$node);
+		}
+	}
 
-			if($data->has($attribute)){
-				$value = $data->get($attribute);
+	protected function getNodeAttribute(\DOMElement $node,$attribute){
+		return $node->getAttribute("{$this->prefix}{$attribute}");
+	}
+
+
+	/**
+	 * Get value from the data based on dot notation
+	 *
+	 * @param string     $attribute
+	 * @param Collection $data
+	 * @return mixed|string
+	 */
+	protected function getValue(string $attribute, Collection $data):string{
+
+		if($data->has($attribute)){
+			return $data->get($attribute);
+		}else{
+			$composite = array_reverse(explode('.',$attribute));
+			$accessor = array_pop($composite);
+
+			if($data->has($accessor)){
+				return $this->getValueFromData($composite,$data->get($accessor));
 			}else{
-				$composite = array_reverse(explode('.',$attribute));
-				$accessor = array_pop($composite);
-
-				if($data->has($accessor)){
-					$value = $this->getValue($composite,$data->get($accessor));
-				}else{
-					$value = $attribute;
-				}
-
+				return $attribute;
 			}
-
-			$this->view->set('./child-gap()',$value,$node);
 		}
 	}
 
@@ -143,10 +166,19 @@ class NViewController implements ViewContract {
 	 * @return \DOMNodeList
 	 */
 	protected function getNodesByToken(string $token): \DOMNodeList{
+
 		return $this->view->getList("//*[@{$this->prefix}{$token}]");
+
 	}
 
-	protected function getValue($composite,$data){
+	/**
+	 * Returns the value from the data based on dot notation
+	 *
+	 * @param array $composite
+	 * @param mixed $data
+	 * @return mixed
+	 */
+	protected function getValueFromData($composite, $data){
 
 		// There are no more pieces left to access so return the result
 		if(count($composite) == 0){
@@ -158,13 +190,13 @@ class NViewController implements ViewContract {
 
 		// If the current data is an object then get the property of the object
 		if(gettype($data) == "object"){
-			return $this->getValue($composite,$data->$accessor);
+			return $this->getValueFromData($composite,$data->$accessor);
 		}
 
 		// If the current data is an array then get the key of the array
 		if(gettype($data) == "array"){
 			$collection = collect(array_dot($data));
-			return $this->getValue($composite,$collection->get($accessor));
+			return $this->getValueFromData($composite,$collection->get($accessor));
 		}
 
 
