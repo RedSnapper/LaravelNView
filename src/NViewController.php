@@ -103,51 +103,72 @@ class NViewController implements ViewContract {
 	}
 
 	protected function compileTranslations(){
-		$nodes = $this->getNodesByToken('tr');
 
-		foreach ($nodes as $node){
-			$translation = $this->translator->trans(
-			  $node->getAttribute("{$this->prefix}tr")
-			);
+		$this->compileNodes('tr',function(\DOMElement $node,$attribute){
+
+			$translation = $this->translator->trans($attribute);
+
 			$this->view->set('.',$translation,$node);
-		}
+
+		});
+
 	}
 
 	protected function compileChildGap(Collection $data){
-		$nodes = $this->getNodesByToken('child');
 
-		foreach ($nodes as $node){
-			$attribute = $this->getNodeAttribute($node,'child');
+		$this->compileNodes('child',function(\DOMElement $node,$attribute) use ($data){
+
 			$value = $this->getValue($attribute,$data);
+
 			$this->view->set('./child-gap()',$value,$node);
-		}
+
+		});
+
 	}
 
 	protected function compileText(Collection $data){
-		$nodes = $this->getNodesByToken('text');
 
-		foreach ($nodes as $node){
-			$attribute = $this->getNodeAttribute($node,'text');
+		$this->compileNodes('text',function(\DOMElement $node,$attribute) use ($data){
+
 			$value = $this->getValue($attribute,$data);
+
 			$this->view->set('.',$value,$node);
-		}
+
+		});
 	}
 
 	protected function compileCan() {
 
-		$nodes = $this->getNodesByToken('can');
-		foreach ($nodes as $node){
-			$attribute = $this->getNodeAttribute($node,'can');
+		$this->compileNodes('can',function(\DOMElement $node,$attribute){
+
 			$gate = Container::getInstance()->make('Gate');
+
 			if($gate::denies($attribute)){
 				$this->view->set('.',null,$node);
 			};
+
+		});
+
+	}
+
+	protected function compileNodes($token,\Closure $closure){
+		$nodes = $this->getNodesByToken($token);
+
+		$closure = $closure->bindTo($this);
+
+		foreach ($nodes as $node){
+
+			$attribute = $this->getNodeAttribute($node,$token);
+			$closure($node,$attribute);
+
 		}
 	}
 
 
 	protected function getNodeAttribute(\DOMElement $node,$attribute){
+
 		return $node->getAttribute("{$this->prefix}{$attribute}");
+
 	}
 
 
