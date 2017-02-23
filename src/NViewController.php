@@ -4,18 +4,25 @@ namespace RS\NView;
 
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Support\Collection;
-use Illuminate\Container\Container;
+use \Illuminate\Contracts\Container\Container;
 
 class NViewController implements ViewContract {
 
+
 	/**
-	 * The translator
+	 * The factory
 	 *
-	 * @var Translator
+	 * @var Factory
 	 */
-	private $translator;
+	protected $factory;
+
+	/**
+	 * The container
+	 *
+	 * @var Container
+	 */
+	private $container;
 
 	/**
 	 * The name of the view.
@@ -52,21 +59,21 @@ class NViewController implements ViewContract {
 	 */
 	protected $prefix = "data-v.";
 
-
 	/**
 	 * Create a new view instance.
 	 *
-	 * @param Translator $translator
-	 * @param  string    $viewName
-	 * @param  string    $path
-	 * @param  mixed     $data
+	 * @param Factory $factory
+	 * @param  string $viewName
+	 * @param  string $path
+	 * @param  mixed  $data
 	 */
-	public function __construct(Translator $translator,$viewName, string $path, $data = []) {
+	public function __construct(Factory $factory,$viewName, string $path, $data = []) {
 		$this->view = new NView($path);
+		$this->factory = $factory;
+		$this->container = $this->factory->getContainer();
 		$this->viewName = $viewName;
 		$this->path = $path;
 		$this->data = $data instanceof Arrayable ? $data->toArray() : (array)$data;
-		$this->translator = $translator;
 	}
 
 	public function render() {
@@ -104,9 +111,11 @@ class NViewController implements ViewContract {
 
 	protected function compileTranslations(){
 
-		$this->compileNodes('tr',function(\DOMElement $node,$attribute){
+		$translator = $this->container->make('translator');
 
-			$translation = $this->translator->trans($attribute);
+		$this->compileNodes('tr',function(\DOMElement $node,$attribute) use ($translator){
+
+			$translation = $translator->trans($attribute);
 
 			$this->view->set('.',$translation,$node);
 
@@ -139,9 +148,9 @@ class NViewController implements ViewContract {
 
 	protected function compileCan() {
 
-		$this->compileNodes('can',function(\DOMElement $node,$attribute){
+		$gate = $this->container->make('Gate');
 
-			$gate = Container::getInstance()->make('Gate');
+		$this->compileNodes('can',function(\DOMElement $node,$attribute) use($gate){
 
 			if($gate::denies($attribute)){
 				$this->view->set('.',null,$node);

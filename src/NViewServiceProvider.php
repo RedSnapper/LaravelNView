@@ -38,7 +38,7 @@ class NViewServiceProvider extends ServiceProvider {
 			// We will also set the container instance on this view environment since the
 			// view composers may be classes registered in the container, which allows
 			// for great testable, flexible composers for the application developer.
-			//$env->setContainer($app);
+			$env->setContainer($app);
 
 			//$env->share('app', $app);
 
