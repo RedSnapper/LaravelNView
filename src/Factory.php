@@ -7,22 +7,15 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\View\ViewName;
 use Illuminate\Contracts\Support\Arrayable;
 use InvalidArgumentException;
-use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\View\Concerns;
+use Illuminate\Support\Arr;
 
 use Illuminate\Contracts\View\Factory as FactoryContract;
 
 class Factory implements FactoryContract {
 
 	use Concerns\ManagesEvents;
-
-	/**
-	 * The Translator implementation.
-	 *
-	 * @var \Illuminate\Contracts\Translation\Translator
-	 */
-	protected $translator;
 
 	/**
 	 * The view finder implementation.
@@ -55,12 +48,10 @@ class Factory implements FactoryContract {
 	/**
 	 * Create a new view factory instance.
 	 *
-	 * @param  \Illuminate\Contracts\Translation\Translator $translator
-	 * @param  \Illuminate\View\ViewFinderInterface         $finder
-	 * @param  \Illuminate\Contracts\Events\Dispatcher      $events
+	 * @param  \Illuminate\View\ViewFinderInterface    $finder
+	 * @param  \Illuminate\Contracts\Events\Dispatcher $events
 	 */
-	public function __construct(Translator $translator, ViewFinderInterface $finder, Dispatcher $events) {
-		$this->translator = $translator;
+	public function __construct(ViewFinderInterface $finder, Dispatcher $events) {
 		$this->finder = $finder;
 		$this->events = $events;
 		$this->share('__env', $this);
@@ -135,7 +126,7 @@ class Factory implements FactoryContract {
 	 * @return \Illuminate\Contracts\View\View
 	 */
 	protected function viewInstance($view, $path, $data) {
-		return new NViewCompiler($this,$view, $path, $data);
+		return new NViewCompiler($this, $view, $path, $data);
 	}
 
 	/**
@@ -252,6 +243,26 @@ class Factory implements FactoryContract {
 	 */
 	public function setContainer(Container $container) {
 		$this->container = $container;
+	}
+
+	/**
+	 * Get an item from the shared data.
+	 *
+	 * @param  string $key
+	 * @param  mixed  $default
+	 * @return mixed
+	 */
+	public function shared($key, $default = null) {
+		return Arr::get($this->shared, $key, $default);
+	}
+
+	/**
+	 * Get all of the shared data for the environment.
+	 *
+	 * @return array
+	 */
+	public function getShared() {
+		return $this->shared;
 	}
 
 }

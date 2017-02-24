@@ -2,14 +2,12 @@
 
 namespace RS\NView;
 
-use Illuminate\Support\Collection;
-
 class NViewController {
 
 	protected $parent;
 
 	/**
-	 * @var Collection
+	 * @var array
 	 */
 	protected $data;
 
@@ -22,9 +20,9 @@ class NViewController {
 	}
 
 	/**
-	 * @return Collection
+	 * @return array
 	 */
-	public function getData(): Collection {
+	public function getData():array {
 		return $this->data;
 	}
 

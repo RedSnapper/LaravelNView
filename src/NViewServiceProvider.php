@@ -33,14 +33,14 @@ class NViewServiceProvider extends ServiceProvider {
 
 			$finder = $app['nview.finder'];
 
-			$env = new Factory($app['translator'], $finder, $app['events']);
+			$env = new Factory($finder, $app['events']);
 
 			// We will also set the container instance on this view environment since the
 			// view composers may be classes registered in the container, which allows
 			// for great testable, flexible composers for the application developer.
 			$env->setContainer($app);
 
-			//$env->share('app', $app);
+			$env->share('app', $app);
 
 			return $env;
 		});

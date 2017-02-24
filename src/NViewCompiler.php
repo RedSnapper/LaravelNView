@@ -89,10 +89,16 @@ class NViewCompiler implements ViewContract {
 	}
 
 	public function render() {
+
+		$this->data = $this->gatherData();
+
 		$view = $this->compile();
+
 		$this->tidy();
+
 		return $view->show(true);
 	}
+
 
 	public function compile() {
 
@@ -354,6 +360,23 @@ class NViewCompiler implements ViewContract {
 		}
 
 		return array_unique($tokens);
+	}
+
+	/**
+	 * Get the data bound to the view instance.
+	 *
+	 * @return array
+	 */
+	protected function gatherData() {
+		$data = array_merge($this->factory->getShared(), $this->data);
+
+		foreach ($data as $key => $value) {
+			if ($value instanceof Renderable) {
+				$data[$key] = $value->render();
+			}
+		}
+
+		return $data;
 	}
 
 }
