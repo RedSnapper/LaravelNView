@@ -2,9 +2,16 @@
 
 namespace RS\NView;
 
+use Illuminate\Support\Collection;
+
 class NViewController {
 
-	protected $parent = null;
+	protected $parent;
+
+	/**
+	 * @var Collection
+	 */
+	protected $data;
 
 	public function render(NView $view):NView{
 		return $view;
@@ -12,6 +19,20 @@ class NViewController {
 
 	public function renderChild(NView $view,NView $child):NView{
 		return $view;
+	}
+
+	/**
+	 * @return Collection
+	 */
+	public function getData(): Collection {
+		return $this->data;
+	}
+
+	/**
+	 * @param array $data
+	 */
+	public function setData(array $data) {
+		$this->data = $data;
 	}
 
 	/**

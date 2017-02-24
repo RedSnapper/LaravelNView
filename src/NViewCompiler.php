@@ -79,8 +79,6 @@ class NViewCompiler implements ViewContract {
 		$this->path = $path;
 		$this->data = $data instanceof Arrayable ? $data->toArray() : (array)$data;
 
-		$this->loadViewController($this->viewName);
-
 	}
 
 	public function render() {
@@ -89,6 +87,9 @@ class NViewCompiler implements ViewContract {
 	}
 
 	public function compile(){
+
+		$this->loadViewController($this->viewName);
+
 		$collection = collect(array_dot($this->data));
 
 		$this->compileCan();
@@ -96,7 +97,8 @@ class NViewCompiler implements ViewContract {
 		$this->compileText($collection);
 		$this->compileTranslations();
 
-		$this->compileParent();
+		$this->renderViewController();
+		$this->renderParent();
 
 		return $this->view;
 	}
@@ -274,7 +276,6 @@ class NViewCompiler implements ViewContract {
 			return $this->getValueFromData($composite,$collection->get($accessor));
 		}
 
-
 	}
 
 	protected function loadViewController(string $viewName) {
@@ -282,10 +283,24 @@ class NViewCompiler implements ViewContract {
 		$class = "App\\View\\" . studly_case($viewName);
 		if(class_exists($class)) {
 			$this->controller = $this->container->make($class);
+			$this->controller->setData($this->data);
 		}
 	}
 
-	protected function renderParent(string $viewName):NView{
+
+	protected function renderParent() {
+		if($this->hasController() && $this->controller->hasParent()){
+			return $this->view = $this->renderParentView($this->controller->getParent());
+		}
+
+		if($parent = $this->view->get("/*/@{$this->prefix}container")){
+			return $this->view = $this->renderParentView($parent);
+		}
+
+
+	}
+
+	protected function renderParentView(string $viewName):NView{
 		$parent = $this->factory->make($viewName,$this->data);
 		$view = $parent->compile();
 		if($parent->hasController()){
@@ -294,16 +309,10 @@ class NViewCompiler implements ViewContract {
 		return $view;
 	}
 
-	protected function compileParent() {
-		if($this->hasController() && $this->controller->hasParent()){
-			return $this->view = $this->renderParent($this->controller->getParent());
+	protected function renderViewController() {
+		if($this->hasController()){
+			return $this->view = $this->controller->render($this->view);
 		}
-
-		if($parent = $this->view->get("/*/@{$this->prefix}container")){
-			return $this->view = $this->renderParent($parent);
-		}
-
-
 	}
 
 }
