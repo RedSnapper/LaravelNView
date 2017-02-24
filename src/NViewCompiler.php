@@ -153,11 +153,10 @@ class NViewCompiler implements ViewContract {
 
 		foreach ($this->compilers as $compiler) {
 
-			if(in_array($compiler['token'],$tokens)){
+			if (in_array($compiler['token'], $tokens)) {
 				$compiler = "compile{$compiler['function']}";
 				$this->$compiler($collection);
 			}
-
 		}
 	}
 
@@ -299,7 +298,14 @@ class NViewCompiler implements ViewContract {
 
 	protected function loadViewController(string $viewName) {
 
+		$viewName = preg_replace_callback("/\.([a-z])/",
+		  function ($matches) {
+			  return "\\" . strtoupper($matches[1]);
+		  },
+		  $viewName);
+
 		$class = "App\\View\\" . studly_case($viewName);
+
 		if (class_exists($class)) {
 			$this->controller = $this->container->make($class);
 			$this->controller->setData($this->data);
@@ -335,7 +341,7 @@ class NViewCompiler implements ViewContract {
 		$this->view->set("//*/@*[starts-with(name(),'$this->prefix')]");
 	}
 
-	protected function getTokensFromView():array{
+	protected function getTokensFromView(): array {
 
 		$attributes = $this->view->getList("//*/@*[starts-with(name(),'$this->prefix')]");
 
