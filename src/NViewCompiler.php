@@ -83,6 +83,7 @@ class NViewCompiler implements ViewContract {
 
 	public function render() {
 		$view = $this->compile();
+		$this->tidy();
 		return $view->show(true);
 	}
 
@@ -313,6 +314,10 @@ class NViewCompiler implements ViewContract {
 		if($this->hasController()){
 			return $this->view = $this->controller->render($this->view);
 		}
+	}
+
+	protected function tidy(){
+		$this->view->set("//*/@*[starts-with(name(),'$this->prefix')]");
 	}
 
 }
