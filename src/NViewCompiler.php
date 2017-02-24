@@ -65,7 +65,7 @@ class NViewCompiler implements ViewContract {
 
 	protected $compilers = [
 	  ['token' => 'can', 'function' => 'Can'],
-	  ['token' => 'can', 'function' => 'Can'],
+	  ['token' => 'cannot', 'function' => 'Cannot'],
 	  ['token' => 'child', 'function' => 'ChildGap'],
 	  ['token' => 'text', 'function' => 'Text'],
 	  ['token' => 'tr', 'function' => 'Translations'],
@@ -150,7 +150,7 @@ class NViewCompiler implements ViewContract {
 		$collection = collect(array_dot($this->data));
 
 		$tokens = $this->getTokensFromView();
-		
+
 		foreach ($this->compilers as $compiler) {
 
 			if(in_array($compiler['token'],$tokens)){
@@ -200,6 +200,18 @@ class NViewCompiler implements ViewContract {
 		$this->compileNodes('can', function (\DOMElement $node, $attribute) use ($gate) {
 
 			if ($gate::denies($attribute)) {
+				$this->view->set('.', null, $node);
+			};
+		});
+	}
+
+	protected function compileCannot(Collection $data) {
+
+		$gate = $this->container->make('Gate');
+
+		$this->compileNodes('cannot', function (\DOMElement $node, $attribute) use ($gate) {
+
+			if ($gate::allows($attribute)) {
 				$this->view->set('.', null, $node);
 			};
 		});
