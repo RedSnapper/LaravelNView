@@ -58,6 +58,8 @@ class NViewCompiler implements ViewContract {
 	 */
 	protected $prefix = "data-v.";
 
+	protected $controller;
+
 	/**
 	 * Create a new view instance.
 	 *
@@ -87,22 +89,31 @@ class NViewCompiler implements ViewContract {
 		$this->compileChildGap($collection);
 		$this->compileText($collection);
 		$this->compileTranslations();
-
-
-		$this->loadViewController();
-		//$parent = $this->view->get("/*/@{$this->prefix}container");
-		//
-		//if($parent){
-		//	$parent = $this->factory->make($parent,$this->data);
-		//	$view = $parent->compile();
-		//	$this->view = $view->set("//*[@{$this->prefix}child='main']",$this->view);
-		//}
+		
+		$this->view = $this->loadViewController($this->viewName);
 
 		return $this->view;
 	}
 
 	public function name() {
 		return $this->viewName;
+	}
+
+	/**
+	 * Get the controller
+	 *
+	 * @return null|NViewController
+	 */
+	public function getController() {
+		return $this->controller;
+	}
+
+	/**
+	 * Has a controller
+	 * @return bool
+	 */
+	public function hasController():bool {
+		return !is_null($this->controller);
 	}
 
 	/**
@@ -260,9 +271,27 @@ class NViewCompiler implements ViewContract {
 
 	}
 
-	protected function loadViewController() {
+	protected function loadViewController(string $viewName) {
 
-		
+		$view = $this->view;
+
+		$class = "App\\View\\" . studly_case($viewName);
+		if(class_exists($class)) {
+			$this->controller = $this->container->make($class);
+			$view = $this->controller->render($this->view);
+			if($parent = $this->controller->getParent()){
+				$parent = $this->factory->make($parent,$this->data);
+				$parentView = $parent->compile();
+				if($parent->hasController()){
+					$view = $parent->getController()->renderChild($parentView,$this->view);
+				}
+				//$this->view = $parent->renderChild($parentView,$this->view);
+			}
+			//$this->view = $controller->childRender($this->view);
+		}
+		return $view;
 	}
+
+
 
 }
