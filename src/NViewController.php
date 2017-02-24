@@ -15,6 +15,13 @@ class NViewController {
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function hasParent():bool {
+		return !is_null($this->parent);
+	}
+
+	/**
 	 * @return null|string
 	 */
 	public function getParent() {

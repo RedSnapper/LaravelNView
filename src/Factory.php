@@ -88,7 +88,7 @@ class Factory implements FactoryContract {
 	 * @param  array  $data
 	 * @param  array  $mergeData
 	 * @param  string $view
-	 * @return NView
+	 * @return NViewCompiler
 	 */
 	public function make($view, $data = [], $mergeData = []) {
 
