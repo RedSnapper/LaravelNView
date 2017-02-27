@@ -9,7 +9,8 @@
         "illuminate/container": "5.4.*",
         "illuminate/contracts": "5.4.*",
         "illuminate/events": "5.4.*",
-        "illuminate/support": "5.4.*"
+        "illuminate/support": "5.4.*",
+        "illuminate/console": "5.4.*"
     },
     "autoload": {
         "psr-4": {

@@ -1,0 +1,17 @@
+<?php
+
+namespace DummyNamespace;
+
+use RS\NView\NView;
+use RS\NView\NViewController;
+
+class DummyClass extends NViewController{
+
+    public function render(NView $view): NView {
+        return $view;
+    }
+
+    public function renderChild(NView $view, NView $child): NView {
+    	return $view;
+    }
+}
