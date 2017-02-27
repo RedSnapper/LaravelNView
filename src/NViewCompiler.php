@@ -4,7 +4,6 @@ namespace RS\NView;
 
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Collection;
 use \Illuminate\Contracts\Container\Container;
 
 class NViewCompiler implements ViewContract {
@@ -153,7 +152,6 @@ class NViewCompiler implements ViewContract {
 
 	protected function runCompilers() {
 
-		$collection = collect(array_dot($this->data));
 
 		$tokens = $this->getTokensFromView();
 
@@ -161,12 +159,12 @@ class NViewCompiler implements ViewContract {
 
 			if (in_array($compiler['token'], $tokens)) {
 				$compiler = "compile{$compiler['function']}";
-				$this->$compiler($collection);
+				$this->$compiler($this->data);
 			}
 		}
 	}
 
-	protected function compileTranslations(Collection $collection) {
+	protected function compileTranslations(array $data) {
 
 		$translator = $this->container->make('translator');
 
@@ -178,7 +176,7 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
-	protected function compileChildGap(Collection $data) {
+	protected function compileChildGap(array $data) {
 
 		$this->compileNodes('child', function (\DOMElement $node, $attribute) use ($data) {
 
@@ -188,7 +186,7 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
-	protected function compileText(Collection $data) {
+	protected function compileText(array $data) {
 
 		$this->compileNodes('text', function (\DOMElement $node, $attribute) use ($data) {
 
@@ -198,7 +196,7 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
-	protected function compileCan(Collection $data) {
+	protected function compileCan(array $data) {
 
 		$gate = $this->container->make('Gate');
 
@@ -210,7 +208,7 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
-	protected function compileCannot(Collection $data) {
+	protected function compileCannot(array $data) {
 
 		$gate = $this->container->make('Gate');
 
@@ -243,23 +241,11 @@ class NViewCompiler implements ViewContract {
 	 * Get value from the data based on dot notation
 	 *
 	 * @param string     $attribute
-	 * @param Collection $data
+	 * @param array $data
 	 * @return mixed|string
 	 */
-	protected function getValue(string $attribute, Collection $data): string {
-
-		if ($data->has($attribute)) {
-			return $data->get($attribute);
-		} else {
-			$composite = array_reverse(explode('.', $attribute));
-			$accessor = array_pop($composite);
-
-			if ($data->has($accessor)) {
-				return $this->getValueFromData($composite, $data->get($accessor));
-			} else {
-				return $attribute;
-			}
-		}
+	protected function getValue(string $attribute,array $data) {
+		return data_get($data,$attribute);
 	}
 
 	/**
@@ -273,34 +259,6 @@ class NViewCompiler implements ViewContract {
 		return $this->view->getList("//*[@{$this->prefix}{$token}]");
 	}
 
-	/**
-	 * Returns the value from the data based on dot notation
-	 *
-	 * @param array $composite
-	 * @param mixed $data
-	 * @return mixed
-	 */
-	protected function getValueFromData($composite, $data) {
-
-		// There are no more pieces left to access so return the result
-		if (count($composite) == 0) {
-			return $data;
-		}
-
-		// Get the next accessor
-		$accessor = array_pop($composite);
-
-		// If the current data is an object then get the property of the object
-		if (gettype($data) == "object") {
-			return $this->getValueFromData($composite, $data->$accessor);
-		}
-
-		// If the current data is an array then get the key of the array
-		if (gettype($data) == "array") {
-			$collection = collect(array_dot($data));
-			return $this->getValueFromData($composite, $collection->get($accessor));
-		}
-	}
 
 	protected function loadViewController(string $viewName) {
 
