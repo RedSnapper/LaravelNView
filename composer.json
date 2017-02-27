@@ -1,5 +1,5 @@
 {
-    "name": "rs/nview",
+    "name": "rs/nview-laravel",
     "description": "Laravel NView",
     "minimum-stability": "dev",
     "require": {
