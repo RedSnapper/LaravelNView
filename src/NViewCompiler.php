@@ -6,6 +6,8 @@ use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Contracts\Support\Arrayable;
 use \Illuminate\Contracts\Container\Container;
 
+use Illuminate\Contracts\Support\Renderable;
+
 class NViewCompiler implements ViewContract {
 
 	/**
@@ -268,7 +270,7 @@ class NViewCompiler implements ViewContract {
 		  },
 		  $viewName);
 
-		$class = "App\\View\\" . studly_case($viewName);
+		$class = $this->container->getNamespace() . "View\\" . studly_case($viewName);
 
 		if (class_exists($class)) {
 			$this->controller = $this->container->make($class);

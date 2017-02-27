@@ -207,6 +207,7 @@ class Factory implements FactoryContract {
 		return $this;
 	}
 
+
 	/**
 	 * Get the event dispatcher instance.
 	 *
