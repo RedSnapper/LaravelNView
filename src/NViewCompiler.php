@@ -344,17 +344,21 @@ class NViewCompiler implements ViewContract {
 	 */
 	protected function loadViewController(string $viewName) {
 
-		$viewName = preg_replace_callback("/\.([a-z])/",
-		  function ($matches) {
-			  return "\\" . strtoupper($matches[1]);
-		  },
-		  $viewName);
-
-		$class = $this->container->getNamespace() . "View\\" . studly_case($viewName);
+		$class = $this->getViewControllerClassName($viewName);
 
 		if (class_exists($class)) {
 			$this->controller = $this->container->make($class);
 		}
+	}
+
+	protected function getViewControllerClassName(string $name){
+
+		$parts = array_map(function($word) { return studly_case($word); }
+		  ,explode('.',$name)
+		);
+
+		return $this->container->getNamespace() . "View\\" . implode('\\',$parts);
+
 	}
 
 	/**
