@@ -8,14 +8,12 @@ use Illuminate\View\ViewName;
 use Illuminate\Contracts\Support\Arrayable;
 use InvalidArgumentException;
 use Illuminate\Contracts\Container\Container;
-use Illuminate\View\Concerns;
 use Illuminate\Support\Arr;
 
 use Illuminate\Contracts\View\Factory as FactoryContract;
+use Illuminate\Contracts\View\View as ViewContract;
 
 class Factory implements FactoryContract {
-
-	use Concerns\ManagesEvents;
 
 	/**
 	 * The view finder implementation.
@@ -207,7 +205,6 @@ class Factory implements FactoryContract {
 		return $this;
 	}
 
-
 	/**
 	 * Get the event dispatcher instance.
 	 *
@@ -264,6 +261,24 @@ class Factory implements FactoryContract {
 	 */
 	public function getShared() {
 		return $this->shared;
+	}
+
+	public function composer($views, $callback) {
+		// TODO: Implement composer() method.
+	}
+
+	public function creator($views, $callback) {
+		// TODO: Implement creator() method.
+	}
+
+	/**
+	 * Call the creator for a given view.
+	 *
+	 * @param  \Illuminate\Contracts\View\View $view
+	 * @return void
+	 */
+	public function callCreator(ViewContract $view) {
+		$this->events->fire('creating: ' . $view->name(), [$view]);
 	}
 
 }
