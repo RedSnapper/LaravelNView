@@ -6,37 +6,40 @@ class NViewController {
 
 	protected $parent;
 
-	/**
-	 * @var array
-	 */
-	protected $data;
 
-	public function render(NView $view):NView{
+	public function render(NView $view,array $data): NView {
 		return $view;
 	}
 
-	public function renderChild(NView $view,NView $child):NView{
+	public function renderChild(NView $view, NView $child, array $data): NView {
 		return $view;
 	}
 
 	/**
-	 * @return array
+	 * Bind data to the view before render.
+	 *
+	 * @param  NViewCompiler $view
+	 * @return void
 	 */
-	public function getData():array {
-		return $this->data;
+	public function compose(NViewCompiler $view) {
+
 	}
 
 	/**
-	 * @param array $data
+	 * Bind data to the view after render
+	 *
+	 * @param  NViewCompiler $view
+	 * @return void
 	 */
-	public function setData(array $data) {
-		$this->data = $data;
+	public function creator(NViewCompiler $view) {
+
 	}
+
 
 	/**
 	 * @return bool
 	 */
-	public function hasParent():bool {
+	public function hasParent(): bool {
 		return !is_null($this->parent);
 	}
 

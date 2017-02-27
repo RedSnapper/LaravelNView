@@ -274,7 +274,6 @@ class NViewCompiler implements ViewContract {
 
 		if (class_exists($class)) {
 			$this->controller = $this->container->make($class);
-			$this->controller->setData($this->data);
 		}
 	}
 
@@ -292,14 +291,16 @@ class NViewCompiler implements ViewContract {
 		$parent = $this->factory->make($viewName, $this->data);
 		$view = $parent->compile();
 		if ($parent->hasController()) {
-			$view = $parent->getController()->renderChild($view, $this->view);
+			$view = $parent->getController()->renderChild($view, $this->view,$this->data);
 		}
 		return $view;
 	}
 
 	protected function renderViewController() {
 		if ($this->hasController()) {
-			return $this->view = $this->controller->render($this->view);
+			$this->controller->compose($this);
+			$this->view = $this->controller->render($this->view,$this->data);
+			$this->controller->creator($this);
 		}
 	}
 
