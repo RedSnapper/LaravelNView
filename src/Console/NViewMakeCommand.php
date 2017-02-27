@@ -25,7 +25,7 @@ class NViewMakeCommand extends GeneratorCommand {
 	 *
 	 * @var string
 	 */
-	protected $type = 'View';
+	protected $type = 'ViewController';
 
 	/**
 	 * Get the stub file for the generator.
@@ -40,33 +40,53 @@ class NViewMakeCommand extends GeneratorCommand {
 	/**
 	 * Get the default namespace for the class.
 	 *
-	 * @param  string  $rootNamespace
+	 * @param  string $rootNamespace
 	 * @return string
 	 */
-	protected function getDefaultNamespace($rootNamespace)
-	{
-		return $rootNamespace.'\View';
+	protected function getDefaultNamespace($rootNamespace) {
+		return $rootNamespace . '\View';
+	}
+
+	public function fire() {
+		parent::fire();
+
+		$name = $this->getNameInput();
+
+		$path = $this->getViewPath($name);
+
+		if ($this->files->exists($path)) {
+			$this->warn('View file already exists!');
+		}
+
+		// Next, we will generate the path to the location where this view file should get
+		// written. Then, we will build the view.
+		$this->makeDirectory($path);
+
+		$this->files->put($path, $this->buildView());
+
+
+		$this->info('View file created successfully.');
+	}
+
+	protected function getViewPath(string $name) {
+
+		// Remove app namespace if provided
+		$name = str_replace_first($this->rootNamespace(), '', $name);
+
+		$name = str_replace('\\', '/', $name);
+
+		$path = $this->files->dirname($name) . "/" . snake_case($this->files->name($name)) . ".xml";
+
+		return $this->laravel['config']['view']['paths'][0] . "/" . $path;
 	}
 
 	/**
-	 * Build the class with the given name.
+	 * Build the view.
 	 *
-	 * Remove the base controller import if we are already in base namespace.
-	 *
-	 * @param  string  $name
 	 * @return string
 	 */
-	protected function buildClass($name)
-	{
-		$controllerNamespace = $this->getNamespace($name);
-
-		$replace = [];
-
-		$replace["use {$controllerNamespace}\Controller;\n"] = '';
-
-		return str_replace(
-		  array_keys($replace), array_values($replace), parent::buildClass($name)
-		);
+	protected function buildView() {
+		return $stub = $this->files->get(__DIR__ . '/stubs/view.stub');;
 	}
 
 }

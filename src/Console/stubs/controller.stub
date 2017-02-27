@@ -7,11 +7,11 @@ use RS\NView\NViewController;
 
 class DummyClass extends NViewController{
 
-    public function render(NView $view): NView {
-        return $view;
-    }
+   public function render(NView $view,array $data): NView {
+   		return $view;
+   	}
 
-    public function renderChild(NView $view, NView $child): NView {
-    	return $view;
-    }
+   	public function renderChild(NView $view, NView $child, array $data): NView {
+   		return $view;
+   	}
 }
