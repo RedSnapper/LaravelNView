@@ -2,9 +2,19 @@
 
 namespace RS\NView\Console;
 
-use Illuminate\Console\GeneratorCommand;
+use Illuminate\Console\Command;
+use Illuminate\Filesystem\Filesystem;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 
-class NViewMakeCommand extends GeneratorCommand {
+class NViewMakeCommand extends Command {
+
+	/**
+	 * The filesystem instance.
+	 *
+	 * @var \Illuminate\Filesystem\Filesystem
+	 */
+	protected $files;
 
 	/**
 	 * The console command name.
@@ -25,7 +35,19 @@ class NViewMakeCommand extends GeneratorCommand {
 	 *
 	 * @var string
 	 */
-	protected $type = 'ViewController';
+	protected $type = 'View';
+
+	/**
+	 * Create a new controller creator command instance.
+	 *
+	 * @param  \Illuminate\Filesystem\Filesystem $files
+	 * @return void
+	 */
+	public function __construct(Filesystem $files) {
+		parent::__construct();
+
+		$this->files = $files;
+	}
 
 	/**
 	 * Get the stub file for the generator.
@@ -33,29 +55,18 @@ class NViewMakeCommand extends GeneratorCommand {
 	 * @return string
 	 */
 	protected function getStub() {
-
-		return __DIR__ . '/stubs/controller.stub';
-	}
-
-	/**
-	 * Get the default namespace for the class.
-	 *
-	 * @param  string $rootNamespace
-	 * @return string
-	 */
-	protected function getDefaultNamespace($rootNamespace) {
-		return $rootNamespace . '\View';
+		return __DIR__ . '/stubs/view.stub';
 	}
 
 	public function fire() {
-		parent::fire();
 
 		$name = $this->getNameInput();
 
 		$path = $this->getViewPath($name);
 
 		if ($this->files->exists($path)) {
-			$this->warn('View file already exists!');
+			$this->error('View file already exists!');
+			return false;
 		}
 
 		// Next, we will generate the path to the location where this view file should get
@@ -64,20 +75,38 @@ class NViewMakeCommand extends GeneratorCommand {
 
 		$this->files->put($path, $this->buildView());
 
-
 		$this->info('View file created successfully.');
+
+		if($this->option('controller')){
+			$this->generateViewController($name);
+		}
+
 	}
 
 	protected function getViewPath(string $name) {
 
-		// Remove app namespace if provided
-		$name = str_replace_first($this->rootNamespace(), '', $name);
-
-		$name = str_replace('\\', '/', $name);
-
-		$path = $this->files->dirname($name) . "/" . snake_case($this->files->name($name)) . ".xml";
+		$path = str_replace('.', '/', $name) . ".xml";
 
 		return $this->laravel['config']['view']['paths'][0] . "/" . $path;
+	}
+
+	/**
+	 * Generate a view controller
+	 *
+	 * @param string $name
+	 */
+	protected function generateViewController(string $name){
+		$this->call('make:viewcontroller',['name'=> $this->getViewControllerName($name)]);
+	}
+
+	protected function getViewControllerName(string $name){
+
+		$parts = array_map(function($word) { return studly_case($word); }
+			,explode('.',$name)
+		);
+
+		return implode('\\',$parts);
+
 	}
 
 	/**
@@ -86,7 +115,52 @@ class NViewMakeCommand extends GeneratorCommand {
 	 * @return string
 	 */
 	protected function buildView() {
-		return $stub = $this->files->get(__DIR__ . '/stubs/view.stub');;
+		return $stub = $this->files->get($this->getStub());
+	}
+
+	/**
+	 * Get the console command arguments.
+	 *
+	 * @return array
+	 */
+	protected function getArguments() {
+		return [
+		  ['name', InputArgument::REQUIRED, 'The name of the view'],
+		];
+	}
+
+	/**
+	 * Get the desired class name from the input.
+	 *
+	 * @return string
+	 */
+	protected function getNameInput() {
+		return trim($this->argument('name'));
+	}
+
+	/**
+	 * Build the directory for the view file if necessary.
+	 *
+	 * @param  string $path
+	 * @return string
+	 */
+	protected function makeDirectory($path) {
+		if (!$this->files->isDirectory(dirname($path))) {
+			$this->files->makeDirectory(dirname($path), 0777, true, true);
+		}
+
+		return $path;
+	}
+
+	/**
+	 * Get the console command options.
+	 *
+	 * @return array
+	 */
+	protected function getOptions() {
+		return [
+		  ['controller', 'c', InputOption::VALUE_NONE, 'Generate a view controller for the given view.'],
+		];
 	}
 
 }

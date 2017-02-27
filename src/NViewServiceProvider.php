@@ -5,6 +5,7 @@ namespace RS\NView;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\FileViewFinder;
 use RS\NView\Console\NViewMakeCommand;
+use RS\NView\Console\NViewControllerMakeCommand;
 
 class NViewServiceProvider extends ServiceProvider {
 
@@ -23,7 +24,8 @@ class NViewServiceProvider extends ServiceProvider {
 	public function boot(){
 		if ($this->app->runningInConsole()) {
 			$this->commands([
-			  NViewMakeCommand::class
+			  NViewMakeCommand::class,
+			  NViewControllerMakeCommand::class
 			]);
 		}
 	}
