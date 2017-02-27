@@ -53,7 +53,7 @@ class NViewCompiler implements ViewContract {
 	protected $path;
 
 	/**
-	 * The prefix for all xpaths.
+	 * The prefix for all xPaths.
 	 *
 	 * @var string
 	 */
@@ -64,6 +64,11 @@ class NViewCompiler implements ViewContract {
 	 */
 	protected $controller;
 
+	/**
+	 * An array of tokens and associatedCompilers
+	 * Compilers will be run in this order
+	 * @var array
+	 */
 	protected $compilers = [
 	  ['token' => 'can', 'function' => 'Can'],
 	  ['token' => 'cannot', 'function' => 'Cannot'],
@@ -90,7 +95,12 @@ class NViewCompiler implements ViewContract {
 		$this->data = $data instanceof Arrayable ? $data->toArray() : (array)$data;
 	}
 
-	public function render() {
+	/**
+	 * Renders the view to a string
+	 *
+	 * @return string
+	 */
+	public function render():string {
 
 		$this->data = $this->gatherData();
 
@@ -101,7 +111,11 @@ class NViewCompiler implements ViewContract {
 		return $view->show(true);
 	}
 
-
+	/**
+	 * Run all compilers on the view
+	 *
+	 * @return NView
+	 */
 	public function compile() {
 
 		$this->loadViewController($this->viewName);
@@ -114,6 +128,11 @@ class NViewCompiler implements ViewContract {
 		return $this->view;
 	}
 
+	/**
+	 * Get the name of the view.
+	 *
+	 * @return string
+	 */
 	public function name() {
 		return $this->viewName;
 	}
@@ -128,7 +147,7 @@ class NViewCompiler implements ViewContract {
 	}
 
 	/**
-	 * Has a controller
+	 * Does the view have an associated controller
 	 *
 	 * @return bool
 	 */
@@ -153,6 +172,11 @@ class NViewCompiler implements ViewContract {
 		return $this;
 	}
 
+	/**
+	 * Run call the compilers
+	 *
+	 * @return void
+	 */
 	protected function runCompilers() {
 
 
@@ -167,6 +191,11 @@ class NViewCompiler implements ViewContract {
 		}
 	}
 
+	/**
+	 * Compiles translations
+	 *
+	 * @return void
+	 */
 	protected function compileTranslations() {
 
 		$translator = $this->container->make('translator');
@@ -179,6 +208,11 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
+	/**
+	 * Compiles child-gap
+	 *
+	 * @return void
+	 */
 	protected function compileChildGap() {
 
 		$this->compileNodes('child', function (\DOMElement $node, $attribute)  {
@@ -189,6 +223,11 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
+	/**
+	 * Compiles text
+	 *
+	 * @return void
+	 */
 	protected function compileText() {
 
 		$this->compileNodes('text', function (\DOMElement $node, $attribute)  {
@@ -199,6 +238,11 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
+	/**
+	 * Security using gates
+	 *
+	 * @return void
+	 */
 	protected function compileCan() {
 
 		$gate = $this->container->make('Gate');
@@ -211,6 +255,11 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
+	/**
+	 * Security using gates
+	 *
+	 * @return void
+	 */
 	protected function compileCannot() {
 
 		$gate = $this->container->make('Gate');
@@ -223,6 +272,11 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
+	/**
+	 * Includes
+	 *
+	 * @return void
+	 */
 	protected function compileInclude() {
 
 		$this->compileNodes('include', function (\DOMElement $node, $attribute)  {
@@ -231,6 +285,12 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
+	/**
+	 * Iterates through nodes which match the given token
+	 *
+	 * @param          $token
+	 * @param \Closure $closure
+	 */
 	protected function compileNodes($token, \Closure $closure) {
 		$nodes = $this->getNodesByToken($token);
 
@@ -243,8 +303,14 @@ class NViewCompiler implements ViewContract {
 		}
 	}
 
+	/**
+	 * Get node attribute using the specified prefix
+	 *
+	 * @param \DOMElement $node
+	 * @param             $attribute
+	 * @return string
+	 */
 	protected function getNodeAttribute(\DOMElement $node, $attribute) {
-
 		return $node->getAttribute("{$this->prefix}{$attribute}");
 	}
 
@@ -270,7 +336,12 @@ class NViewCompiler implements ViewContract {
 		return $this->view->getList("//*[@{$this->prefix}{$token}]");
 	}
 
-
+	/**
+	 * Loads an associated controller given a view name
+	 *
+	 * @param string $viewName
+	 * @return void
+	 */
 	protected function loadViewController(string $viewName) {
 
 		$viewName = preg_replace_callback("/\.([a-z])/",
@@ -286,6 +357,11 @@ class NViewCompiler implements ViewContract {
 		}
 	}
 
+	/**
+	 * Render the parent of the given view
+	 *
+	 * @return NView
+	 */
 	protected function renderParent() {
 		if ($this->hasController() && $this->controller->hasParent()) {
 			return $this->view = $this->renderParentView($this->controller->getParent());
@@ -296,6 +372,13 @@ class NViewCompiler implements ViewContract {
 		}
 	}
 
+	/**
+	 * Renders the parent given a view name
+	 * Calls renderChild on the controller
+	 *
+	 * @param string $viewName
+	 * @return NView
+	 */
 	protected function renderParentView(string $viewName): NView {
 		$parent = $this->factory->make($viewName, $this->data);
 		$view = $parent->compile();
@@ -305,6 +388,9 @@ class NViewCompiler implements ViewContract {
 		return $view;
 	}
 
+	/**
+	 * Calls the render method on the associated controller
+	 */
 	protected function renderViewController() {
 		if ($this->hasController()) {
 			$this->controller->compose($this);
@@ -313,10 +399,19 @@ class NViewCompiler implements ViewContract {
 		}
 	}
 
+	/**
+	 * Remove all prefixed attributes from the view
+	 *
+	 */
 	protected function tidy() {
 		$this->view->set("//*/@*[starts-with(name(),'$this->prefix')]");
 	}
 
+	/**
+	 * Returns a unique list of all the tokens found in the view
+	 *
+	 * @return array
+	 */
 	protected function getTokensFromView(): array {
 
 		$attributes = $this->view->getList("//*/@*[starts-with(name(),'$this->prefix')]");
