@@ -67,6 +67,7 @@ class NViewCompiler implements ViewContract {
 	protected $compilers = [
 	  ['token' => 'can', 'function' => 'Can'],
 	  ['token' => 'cannot', 'function' => 'Cannot'],
+	  ['token' => 'include', 'function' => 'Include'],
 	  ['token' => 'child', 'function' => 'ChildGap'],
 	  ['token' => 'text', 'function' => 'Text'],
 	  ['token' => 'tr', 'function' => 'Translations'],
@@ -161,12 +162,12 @@ class NViewCompiler implements ViewContract {
 
 			if (in_array($compiler['token'], $tokens)) {
 				$compiler = "compile{$compiler['function']}";
-				$this->$compiler($this->data);
+				$this->$compiler();
 			}
 		}
 	}
 
-	protected function compileTranslations(array $data) {
+	protected function compileTranslations() {
 
 		$translator = $this->container->make('translator');
 
@@ -178,27 +179,27 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
-	protected function compileChildGap(array $data) {
+	protected function compileChildGap() {
 
-		$this->compileNodes('child', function (\DOMElement $node, $attribute) use ($data) {
+		$this->compileNodes('child', function (\DOMElement $node, $attribute)  {
 
-			$value = $this->getValue($attribute, $data);
+			$value = $this->getValue($attribute, $this->data);
 
 			$this->view->set('./child-gap()', $value, $node);
 		});
 	}
 
-	protected function compileText(array $data) {
+	protected function compileText() {
 
-		$this->compileNodes('text', function (\DOMElement $node, $attribute) use ($data) {
+		$this->compileNodes('text', function (\DOMElement $node, $attribute)  {
 
-			$value = $this->getValue($attribute, $data);
+			$value = $this->getValue($attribute, $this->data);
 
 			$this->view->set('.', $value, $node);
 		});
 	}
 
-	protected function compileCan(array $data) {
+	protected function compileCan() {
 
 		$gate = $this->container->make('Gate');
 
@@ -210,7 +211,7 @@ class NViewCompiler implements ViewContract {
 		});
 	}
 
-	protected function compileCannot(array $data) {
+	protected function compileCannot() {
 
 		$gate = $this->container->make('Gate');
 
@@ -219,6 +220,14 @@ class NViewCompiler implements ViewContract {
 			if ($gate::allows($attribute)) {
 				$this->view->set('.', null, $node);
 			};
+		});
+	}
+
+	protected function compileInclude() {
+
+		$this->compileNodes('include', function (\DOMElement $node, $attribute)  {
+			$include = $this->factory->make($attribute,$this->data);
+			$this->view->set('.', $include->compile(), $node);
 		});
 	}
 
