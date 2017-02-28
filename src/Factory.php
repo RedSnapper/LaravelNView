@@ -81,6 +81,8 @@ class Factory implements FactoryContract {
 	 */
 	public function make($view, $data = [], $mergeData = []) {
 
+
+
 		$path = $this->finder->find(
 		  $view = $this->normalizeName($view)
 		);

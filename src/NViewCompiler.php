@@ -385,11 +385,12 @@ class NViewCompiler implements ViewContract {
 	 */
 	protected function renderParentView(string $viewName): NView {
 		$parent = $this->factory->make($viewName, $this->data);
-		$view = $parent->compile();
+		$parentView = $parent->compile();
 		if ($parent->hasController()) {
-			$view = $parent->getController()->renderChild($view, $this->view,$this->data);
+			$parentView = $parent->getController()->renderChild($parentView, $this->view,$this->data);
+
 		}
-		return $view;
+		return $parentView;
 	}
 
 	/**
