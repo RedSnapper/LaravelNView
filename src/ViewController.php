@@ -2,7 +2,7 @@
 
 namespace RS\NView;
 
-class NViewController {
+class ViewController {
 
 	protected $parent;
 

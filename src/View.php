@@ -61,7 +61,7 @@ class View implements ViewContract {
 	protected $prefix = "data-v.";
 
 	/**
-	 * @var null|NViewController
+	 * @var null|ViewController
 	 */
 	protected $controller;
 
@@ -141,8 +141,9 @@ class View implements ViewContract {
 
 	/**
 	 * Get the controller
+
 	 *
-	 * @return null|NViewController
+*@return null|ViewController
 	 */
 	public function getController() {
 		return $this->controller;

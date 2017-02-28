@@ -2,10 +2,10 @@
 
 namespace DummyNamespace;
 
-use RS\NView\NView;
-use RS\NView\NViewController;
+use RS\NView\Document;
+use RS\NView\ViewController;
 
-class DummyClass extends NViewController{
+class DummyClass extends ViewController{
 
    public function render(NView $view,array $data): NView {
    		return $view;
