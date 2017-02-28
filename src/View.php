@@ -8,7 +8,7 @@ use \Illuminate\Contracts\Container\Container;
 
 use Illuminate\Contracts\Support\Renderable;
 
-class NViewCompiler implements ViewContract {
+class View implements ViewContract {
 
 	/**
 	 * The factory

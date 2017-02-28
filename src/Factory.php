@@ -73,11 +73,12 @@ class Factory implements FactoryContract {
 
 	/**
 	 * Get the evaluated view contents for the given view.
+
 	 *
-	 * @param  array  $data
+*@param  array  $data
 	 * @param  array  $mergeData
 	 * @param  string $view
-	 * @return NViewCompiler
+	 * @return View
 	 */
 	public function make($view, $data = [], $mergeData = []) {
 
@@ -126,7 +127,7 @@ class Factory implements FactoryContract {
 	 * @return \Illuminate\Contracts\View\View
 	 */
 	protected function viewInstance($view, $path, $data) {
-		return new NViewCompiler($this, $view, $path, $data);
+		return new View($this, $view, $path, $data);
 	}
 
 	/**

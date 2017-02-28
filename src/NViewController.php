@@ -17,21 +17,23 @@ class NViewController {
 
 	/**
 	 * Bind data to the view before render.
+
 	 *
-	 * @param  NViewCompiler $view
+*@param  View $view
 	 * @return void
 	 */
-	public function compose(NViewCompiler $view) {
+	public function compose(View $view) {
 
 	}
 
 	/**
 	 * Bind data to the view after render
+
 	 *
-	 * @param  NViewCompiler $view
+*@param  View $view
 	 * @return void
 	 */
-	public function creator(NViewCompiler $view) {
+	public function creator(View $view) {
 
 	}
 
