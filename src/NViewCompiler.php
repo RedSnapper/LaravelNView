@@ -371,7 +371,7 @@ class NViewCompiler implements ViewContract {
 			return $this->view = $this->renderParentView($this->controller->getParent());
 		}
 
-		if ($parent = $this->view->get("/*/@{$this->prefix}container")) {
+		if ($parent = $this->view->get("/*/@{$this->prefix}parent")) {
 			return $this->view = $this->renderParentView($parent);
 		}
 	}
