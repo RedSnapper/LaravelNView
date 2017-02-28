@@ -7,7 +7,7 @@ use Exception;
 
 mb_internal_encoding('UTF-8');
 
-class NView {
+class Document {
 
 	const GAP_NONE = 1;
 	const GAP_FOLLOWING = 2;
@@ -313,7 +313,7 @@ class NView {
 				case "string":
 				case "double":
 				case "object" : { //probably a node.
-					if (gettype($value) != "object" || is_subclass_of($value, \DOMNode::class) || $value instanceof \DOMNodeList || $value instanceof NView) {
+					if (gettype($value) != "object" || is_subclass_of($value, \DOMNode::class) || $value instanceof \DOMNodeList || $value instanceof Document) {
 						if (is_null($ref)) {
 							$entries = $this->xp->query($xpath);
 						} else {
@@ -338,7 +338,7 @@ class NView {
 								}
 							}
 							if ($entries->length !== 0 ) {
-								if ($value instanceof NView) {
+								if ($value instanceof Document) {
 									if ($gap !== self::GAP_DATA) {
 										$value = $value->doc->documentElement;
 									} else {
@@ -588,7 +588,7 @@ class NView {
 	 * 'con_object'
 	 */
 	private function con_object($value) {
-		if ($value instanceof NView)
+		if ($value instanceof Document)
 		{
 			$this->con_class($value);
 		}

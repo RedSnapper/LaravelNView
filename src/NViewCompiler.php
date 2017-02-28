@@ -26,8 +26,9 @@ class NViewCompiler implements ViewContract {
 
 	/**
 	 * The name of the view.
+
 	 *
-	 * @var NView
+*@var Document
 	 */
 	protected $view;
 
@@ -87,7 +88,7 @@ class NViewCompiler implements ViewContract {
 	 * @param  mixed  $data
 	 */
 	public function __construct(Factory $factory, $viewName, string $path, $data = []) {
-		$this->view = new NView($path);
+		$this->view = new Document($path);
 		$this->factory = $factory;
 		$this->container = $this->factory->getContainer();
 		$this->viewName = $viewName;
@@ -113,8 +114,9 @@ class NViewCompiler implements ViewContract {
 
 	/**
 	 * Run all compilers on the view
+
 	 *
-	 * @return NView
+*@return Document
 	 */
 	public function compile() {
 
@@ -363,8 +365,9 @@ class NViewCompiler implements ViewContract {
 
 	/**
 	 * Render the parent of the given view
+
 	 *
-	 * @return NView
+*@return Document
 	 */
 	protected function renderParent() {
 		if ($this->hasController() && $this->controller->hasParent()) {
@@ -379,11 +382,12 @@ class NViewCompiler implements ViewContract {
 	/**
 	 * Renders the parent given a view name
 	 * Calls renderChild on the controller
+
 	 *
-	 * @param string $viewName
-	 * @return NView
+*@param string $viewName
+	 * @return Document
 	 */
-	protected function renderParentView(string $viewName): NView {
+	protected function renderParentView(string $viewName): Document {
 		$parent = $this->factory->make($viewName, $this->data);
 		$parentView = $parent->compile();
 		if ($parent->hasController()) {

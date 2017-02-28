@@ -7,11 +7,11 @@ class NViewController {
 	protected $parent;
 
 
-	public function render(NView $view,array $data): NView {
+	public function render(Document $view, array $data): Document {
 		return $view;
 	}
 
-	public function renderChild(NView $view, NView $child, array $data): NView {
+	public function renderChild(Document $view, Document $child, array $data): Document {
 		return $view;
 	}
 
