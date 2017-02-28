@@ -26,9 +26,8 @@ class View implements ViewContract {
 
 	/**
 	 * The name of the view.
-
 	 *
-*@var Document
+	 * @var Document
 	 */
 	protected $view;
 
@@ -68,6 +67,7 @@ class View implements ViewContract {
 	/**
 	 * An array of tokens and associatedCompilers
 	 * Compilers will be run in this order
+	 *
 	 * @var array
 	 */
 	protected $compilers = [
@@ -101,7 +101,7 @@ class View implements ViewContract {
 	 *
 	 * @return string
 	 */
-	public function render():string {
+	public function render(): string {
 
 		$this->data = $this->gatherData();
 
@@ -114,9 +114,8 @@ class View implements ViewContract {
 
 	/**
 	 * Run all compilers on the view
-
 	 *
-*@return Document
+	 * @return Document
 	 */
 	public function compile() {
 
@@ -141,9 +140,8 @@ class View implements ViewContract {
 
 	/**
 	 * Get the controller
-
 	 *
-*@return null|ViewController
+	 * @return null|ViewController
 	 */
 	public function getController() {
 		return $this->controller;
@@ -182,7 +180,6 @@ class View implements ViewContract {
 	 */
 	protected function runCompilers() {
 
-
 		$tokens = $this->getTokensFromView();
 
 		foreach ($this->compilers as $compiler) {
@@ -218,7 +215,7 @@ class View implements ViewContract {
 	 */
 	protected function compileChildGap() {
 
-		$this->compileNodes('child', function (\DOMElement $node, $attribute)  {
+		$this->compileNodes('child', function (\DOMElement $node, $attribute) {
 
 			$value = $this->getValue($attribute, $this->data);
 
@@ -233,7 +230,7 @@ class View implements ViewContract {
 	 */
 	protected function compileText() {
 
-		$this->compileNodes('text', function (\DOMElement $node, $attribute)  {
+		$this->compileNodes('text', function (\DOMElement $node, $attribute) {
 
 			$value = $this->getValue($attribute, $this->data);
 
@@ -282,8 +279,8 @@ class View implements ViewContract {
 	 */
 	protected function compileInclude() {
 
-		$this->compileNodes('include', function (\DOMElement $node, $attribute)  {
-			$include = $this->factory->make($attribute,$this->data);
+		$this->compileNodes('include', function (\DOMElement $node, $attribute) {
+			$include = $this->factory->make($attribute, $this->data);
 			$this->view->set('.', $include->compile(), $node);
 		});
 	}
@@ -320,12 +317,12 @@ class View implements ViewContract {
 	/**
 	 * Get value from the data based on dot notation
 	 *
-	 * @param string     $attribute
-	 * @param array $data
+	 * @param string $attribute
+	 * @param array  $data
 	 * @return mixed|string
 	 */
-	protected function getValue(string $attribute,array $data) {
-		return data_get($data,$attribute);
+	protected function getValue(string $attribute, array $data) {
+		return data_get($data, $attribute);
 	}
 
 	/**
@@ -347,28 +344,40 @@ class View implements ViewContract {
 	 */
 	protected function loadViewController(string $viewName) {
 
-		$class = $this->getViewControllerClassName($viewName);
+		// First check if we have a controller declared in our view
+		// Or try and load an associated controller by view name
 
-		if (class_exists($class)) {
-			$this->controller = $this->container->make($class);
+		if($controller = $this->view->get("/*/@{$this->prefix}controller")){
+			$this->loadViewControllerClass($controller);
+		}else{
+			$this->loadViewControllerClass($viewName);
 		}
+
 	}
 
-	protected function getViewControllerClassName(string $name){
+	protected function loadViewControllerClass($name):bool{
+		$class = $this->getViewControllerClassName($name);
+		if ($exists = class_exists($class)) {
+			$this->controller = $this->container->make($class);
+		}
+		return $exists;
+	}
 
-		$parts = array_map(function($word) { return studly_case($word); }
-		  ,explode('.',$name)
+	protected function getViewControllerClassName(string $name) {
+
+		$parts = array_map(function ($word) {
+			return studly_case($word);
+		}
+		  , explode('.', $name)
 		);
 
-		return $this->container->getNamespace() . "View\\" . implode('\\',$parts);
-
+		return $this->container->getNamespace() . "View\\" . implode('\\', $parts);
 	}
 
 	/**
 	 * Render the parent of the given view
-
 	 *
-*@return Document
+	 * @return Document
 	 */
 	protected function renderParent() {
 		if ($this->hasController() && $this->controller->hasParent()) {
@@ -383,17 +392,15 @@ class View implements ViewContract {
 	/**
 	 * Renders the parent given a view name
 	 * Calls renderChild on the controller
-
 	 *
-*@param string $viewName
+	 * @param string $viewName
 	 * @return Document
 	 */
 	protected function renderParentView(string $viewName): Document {
 		$parent = $this->factory->make($viewName, $this->data);
 		$parentView = $parent->compile();
 		if ($parent->hasController()) {
-			$parentView = $parent->getController()->renderChild($parentView, $this->view,$this->data);
-
+			$parentView = $parent->getController()->renderChild($parentView, $this->view, $this->data);
 		}
 		return $parentView;
 	}
@@ -404,14 +411,14 @@ class View implements ViewContract {
 	protected function renderViewController() {
 		if ($this->hasController()) {
 			$this->controller->compose($this);
-			$this->view = $this->controller->render($this->view,$this->data);
+			$this->view = $this->controller->render($this->view, $this->data);
 			$this->controller->creator($this);
 		}
 	}
 
 	/**
 	 * Remove all prefixed attributes from the view
-	 *
+
 	 */
 	protected function tidy() {
 		$this->view->set("//*/@*[starts-with(name(),'$this->prefix')]");
