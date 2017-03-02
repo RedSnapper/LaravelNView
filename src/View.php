@@ -219,7 +219,7 @@ class View implements ViewContract {
 
 			$value = $this->getValue($attribute, $this->data);
 
-			$this->view->set('./child-gap()', $value, $node);
+			$this->view->set('./child-gap()', e($value), $node);
 		});
 	}
 
@@ -234,7 +234,7 @@ class View implements ViewContract {
 
 			$value = $this->getValue($attribute, $this->data);
 
-			$this->view->set('.', $value, $node);
+			$this->view->set('.', e($value), $node);
 		});
 	}
 
@@ -454,7 +454,7 @@ class View implements ViewContract {
 
 		foreach ($data as $key => $value) {
 			if ($value instanceof Renderable) {
-				$data[$key] = $value->render();
+				$data[$key] = $value->compile();
 			}
 		}
 
