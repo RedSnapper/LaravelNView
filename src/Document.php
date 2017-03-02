@@ -1,6 +1,5 @@
 <?php
 
-
 namespace RS\NView;
 
 use Exception;
@@ -37,34 +36,36 @@ class Document {
 	/**
 	 * NView constructor.
 	 *
-	 * @param string     $value
+	 * @param string $value
 	 */
 	public function __construct($value = '') {
 
-
 		set_error_handler(array($this, 'doMsg'), E_ALL | E_STRICT);
 		try {
-			switch(gettype($value)) {
+			switch (gettype($value)) {
 				case 'NULL':
 				case 'string': {
 					$this->con_string($value);
-				} break;
+				}
+				break;
 				case 'object': {
 					$this->con_object($value);
-				} break;
+				}
+				break;
 				case 'resource': {
 					$contents = '';
 					while (!feof($value)) {
-						$contents .= fread($value,1024);
+						$contents .= fread($value, 1024);
 					}
 					$this->con_string($contents);
-				} break;
+				}
+				break;
 				default: {
 					$this->doMsg("NView:: __construct does not (yet) support " . gettype($value));
 				}
 			}
 		} catch (Exception $e) {
-			$this->doMsg($e->getCode(),"NView: " . $e->getMessage(),$e->getFile(), $e->getLine());
+			$this->doMsg($e->getCode(), "NView: " . $e->getMessage(), $e->getFile(), $e->getLine());
 		}
 		restore_error_handler();
 	}
@@ -80,7 +81,7 @@ class Document {
 	 * 'show'
 	 */
 	public function show($whole_doc = false) {
-		$retval="";
+		$retval = "";
 		if (!is_null($this->doc) && !is_null($this->xp)) {
 			$this->tidyView();
 			ob_start();
@@ -93,12 +94,11 @@ class Document {
 		return $retval;
 	}
 
-
 	/**
 	 * 'text'
 	 */
 	public function text() {
-		$retval="";
+		$retval = "";
 		if (!is_null($this->doc) && !is_null($this->xp)) {
 			$this->tidyView();
 			$retval = $this->doc->textContent;
@@ -106,34 +106,31 @@ class Document {
 		return $retval;
 	}
 
-
 	/**
 	 * 'as_fragment'
 	 */
 	public static function as_fragment($docstr) {
-		$s1='/<\?xml[^?]+\?>/';
-		$s2='/<!DOCTYPE \w+>/';
-		$s3='/\sxmlns="http:\/\/www.w3.org\/1999\/xhtml"/';
+		$s1 = '/<\?xml[^?]+\?>/';
+		$s2 = '/<!DOCTYPE \w+>/';
+		$s3 = '/\sxmlns="http:\/\/www.w3.org\/1999\/xhtml"/';
 		$ksub = array($s1, $s2, $s3);
-		return trim(preg_replace($ksub,'',$docstr));
+		return trim(preg_replace($ksub, '', $docstr));
 	}
-
-
 
 	/**
 	 * 'addNamespace'
 	 */
-	public function addNamespace($prefix,$namespace) {
+	public function addNamespace($prefix, $namespace) {
 		if (!is_null($this->xp)) {
-			$this->xp->registerNamespace($prefix,$namespace);
+			$this->xp->registerNamespace($prefix, $namespace);
 		}
 	}
 
 	/**
 	 * 'strToNode'
 	 */
-	public function strToNode($value=null) {
-		$fnode = NULL;
+	public function strToNode($value = null) {
+		$fnode = null;
 		$fnode = $this->doc->createDocumentFragment();
 		$this->errs = '';
 		set_error_handler(array($this, 'doMsg'), E_ALL | E_STRICT);
@@ -143,29 +140,28 @@ class Document {
 			$fragstr = $this->xmlenc($value);
 			$fnode->appendXML($fragstr);
 		} catch (Exception $ex) {
-			$this->doMsg('Attempted fragment:',htmlspecialchars(print_r($fragstr,true)));
+			$this->doMsg('Attempted fragment:', htmlspecialchars(print_r($fragstr, true)));
 			restore_error_handler();
 			throw $ex;
 		}
 		restore_error_handler();
-		if (strpos($this->errs,'parser error') !== false) {
+		if (strpos($this->errs, 'parser error') !== false) {
 			$fnode = $this->doc->createTextNode($value);
 		}
 		$node = $this->doc->importNode($fnode, true);
 		return $node;
-
 	}
 
 	/**
 	 * 'count'
 	 */
-	public function count($xpath,$ref=null) {
+	public function count($xpath, $ref = null) {
 		$retval = 0;
 		if (!is_null($this->doc) && !is_null($this->xp)) {
 			if (is_null($ref)) {
 				$entries = $this->xp->query($xpath);
 			} else {
-				$entries = $this->xp->query($xpath,$ref);
+				$entries = $this->xp->query($xpath, $ref);
 			}
 			if ($entries) {
 				$retval = $entries->length;
@@ -181,11 +177,11 @@ class Document {
 	/**
 	 * 'consume'
 	 */
-	public function consume($xpath, $ref=null) {
+	public function consume($xpath, $ref = null) {
 		$retval = null;
 		$retval = $this->get($xpath, $ref);
 		if (!is_null($retval)) {
-			$this->set($xpath,null,$ref);
+			$this->set($xpath, null, $ref);
 		}
 		return $retval;
 	}
@@ -195,9 +191,9 @@ class Document {
 	 * @param null   $ref
 	 * @return \DOMNodeList
 	 */
-	public function getList(string $xpath , $ref=null):\DOMNodeList{
+	public function getList(string $xpath, $ref = null): \DOMNodeList {
 		if (!is_null($this->doc) && !is_null($this->xp)) {
-			return $this->xp->query($xpath,$ref);
+			return $this->xp->query($xpath, $ref);
 		}
 		return new \DOMNodeList();
 	}
@@ -205,12 +201,12 @@ class Document {
 	/**
 	 * 'get'
 	 */
-	public function get($xpath, $ref=null) {
+	public function get($xpath, $ref = null) {
 		$retval = null;
 		if (!is_null($this->doc) && !is_null($this->xp)) {
-			set_error_handler(array($this,'doMsg'),E_ALL | E_STRICT);
+			set_error_handler(array($this, 'doMsg'), E_ALL | E_STRICT);
 
-			$entries = $this->xp->query($xpath,$ref);
+			$entries = $this->xp->query($xpath, $ref);
 
 			if ($entries) {
 				switch ($entries->length) {
@@ -222,18 +218,18 @@ class Document {
 							$retval = $entry->value;
 						} elseif ($entry->nodeType == XML_ELEMENT_NODE) {
 							//convert this to a domdocument so that we can maintain the namespace.
-							$retval = new \DOMDocument("1.0","utf-8");
+							$retval = new \DOMDocument("1.0", "utf-8");
 							$retval->preserveWhiteSpace = true;
 							$retval->formatOutput = false;
 							$node = $retval->importNode($entry, true);
 							$retval->appendChild($node);
-							$olde= $this->doc->documentElement;
+							$olde = $this->doc->documentElement;
 							if ($olde->hasAttributes()) {
-								$myde= $retval->documentElement;
+								$myde = $retval->documentElement;
 								foreach ($olde->attributes as $attr) {
-									if (substr($attr->nodeName,0,6)=="xmlns:") {
+									if (substr($attr->nodeName, 0, 6) == "xmlns:") {
 										$myde->removeAttribute($attr->nodeName);
-										$natr = $retval->importNode($attr,true);
+										$natr = $retval->importNode($attr, true);
 										$myde->setAttributeNode($natr);
 									}
 								}
@@ -242,11 +238,14 @@ class Document {
 						} else {
 							$retval = $entry;
 						}
-					} break;
-					case 0: break;
+					}
+					break;
+					case 0:
+					break;
 					default: {
-						$retval=$entries;
-					} break;
+						$retval = $entries;
+					}
+					break;
 				}
 			} else {
 				$this->doMsg('NView::get() ' . $xpath . ' failed.');
@@ -258,44 +257,41 @@ class Document {
 		return $retval;
 	}
 
-
 	/**
 	 * 'set'
 	 */
 	public function set($xpath, $value = null, $ref = null, $unused = true) {
 		//replace node at string xpath with node 'value'.
-		set_error_handler(array($this,'doMsg'), E_ALL | E_STRICT);
+		set_error_handler(array($this, 'doMsg'), E_ALL | E_STRICT);
 		if (!is_null($this->doc) && !is_null($this->xp)) {
 			$gap = self::GAP_NONE;
-			if (substr($xpath,-6)=="-gap()") {
-				$xpath = mb_substr($xpath,0,-6); //remove the -gap();
-				if (substr($xpath,-6)=="/child") {
-					$xpath = mb_substr($xpath,0,-6); //remove the child;
-					$gap=self::GAP_CHILD;
+			if (substr($xpath, -6) == "-gap()") {
+				$xpath = mb_substr($xpath, 0, -6); //remove the -gap();
+				if (substr($xpath, -6) == "/child") {
+					$xpath = mb_substr($xpath, 0, -6); //remove the child;
+					$gap = self::GAP_CHILD;
+				} elseif (substr($xpath, -10) == "/preceding") {
+					$xpath = mb_substr($xpath, 0, -10); //remove the child;
+					$gap = self::GAP_PRECEDING;
+				} elseif (substr($xpath, -10) == "/following") {
+					$xpath = mb_substr($xpath, 0, -10); //remove the child;
+					$gap = self::GAP_FOLLOWING;
 				}
-				elseif (substr($xpath,-10)=="/preceding") {
-					$xpath = mb_substr($xpath,0,-10); //remove the child;
-					$gap=self::GAP_PRECEDING;
-				}
-				elseif (substr($xpath,-10)=="/following") {
-					$xpath = mb_substr($xpath,0,-10); //remove the child;
-					$gap=self::GAP_FOLLOWING;
-				}
-			} elseif (substr($xpath,-7)=="/data()") {
-				$xpath = mb_substr($xpath,0,-7); //remove the func.;
-				$gap=self::GAP_DATA;
+			} elseif (substr($xpath, -7) == "/data()") {
+				$xpath = mb_substr($xpath, 0, -7); //remove the func.;
+				$gap = self::GAP_DATA;
 			}
 			//now act according to value type.
 			switch (gettype($value)) {
 				case "NULL": {
-					if ($gap==self::GAP_NONE) {
+					if ($gap == self::GAP_NONE) {
 						if (is_null($ref)) {
 							$entries = $this->xp->query($xpath);
 						} else {
-							$entries = $this->xp->query($xpath,$ref);
+							$entries = $this->xp->query($xpath, $ref);
 						}
 						if ($entries) {
-							foreach($entries as $entry) {
+							foreach ($entries as $entry) {
 								if ($entry instanceof \DOMAttr) {
 									$entry->parentNode->removeAttributeNode($entry);
 								} else {
@@ -307,37 +303,46 @@ class Document {
 							$this->doMsg('NView::set() ' . $xpath . ' failed.');
 						}
 					}
-				} break;
+				}
+				break;
 				case "boolean":
 				case "integer":
 				case "string":
 				case "double":
 				case "object" : { //probably a node.
-					if (gettype($value) != "object" || is_subclass_of($value, \DOMNode::class) || $value instanceof \DOMNodeList || $value instanceof Document) {
+					if (gettype($value) != "object" || is_subclass_of($value, \DOMNode::class) || $value instanceof \DOMNodeList
+					  || $value instanceof Document || $value instanceof View
+					) {
+
 						if (is_null($ref)) {
 							$entries = $this->xp->query($xpath);
 						} else {
-							$entries = $this->xp->query($xpath,$ref);
+							$entries = $this->xp->query($xpath, $ref);
 						}
 						if ($entries) {
-							if ($entries->length === 0 ) { //maybe this is a new attribute!? [&& $gap == self::GAP_NONE]
-								$spoint = mb_strrpos($xpath,'/');
-								$apoint = mb_strrpos($xpath,'@');
-								if ($apoint == $spoint+1) {
-									$aname= mb_substr($xpath,$apoint+1); //grab the attribute name.
-									$xpath= mb_substr($xpath,0,$spoint); //resize the xpath.
-									$gap=self::GAP_NATTR;
+							if ($entries->length === 0) { //maybe this is a new attribute!? [&& $gap == self::GAP_NONE]
+								$spoint = mb_strrpos($xpath, '/');
+								$apoint = mb_strrpos($xpath, '@');
+								if ($apoint == $spoint + 1) {
+									$aname = mb_substr($xpath, $apoint + 1); //grab the attribute name.
+									$xpath = mb_substr($xpath, 0, $spoint); //resize the xpath.
+									$gap = self::GAP_NATTR;
 									if (is_null($ref)) { //re-evaluate the xpath without the attribute component.
 										$entries = $this->xp->query($xpath);
 									} else {
-										$entries = $this->xp->query($xpath,$ref);
+										$entries = $this->xp->query($xpath, $ref);
 									}
 									if (!$entries) {
 										$this->doMsg('NView::set() ' . $xpath . ' failed.');
 									}
 								}
 							}
-							if ($entries->length !== 0 ) {
+							if ($entries->length !== 0) {
+
+								if($value instanceof View){
+									$value = $value->compile();
+								}
+
 								if ($value instanceof Document) {
 									if ($gap !== self::GAP_DATA) {
 										$value = $value->doc->documentElement;
@@ -345,42 +350,48 @@ class Document {
 										$value = $value->show(false);
 									}
 								}
-								foreach($entries as $entry) {
-									if ($gap == self::GAP_NATTR && $entry->nodeType==XML_ELEMENT_NODE && isset($aname)) {
-										$entry->setAttribute($aname,strval($value));
+								foreach ($entries as $entry) {
+									if ($gap == self::GAP_NATTR && $entry->nodeType == XML_ELEMENT_NODE && isset($aname)) {
+										$entry->setAttribute($aname, strval($value));
 									} else {
 										if (($entry->nodeType == XML_ATTRIBUTE_NODE) && (gettype($value) != "object")) {
 											switch ($gap) {
 												case self::GAP_NONE: {
 													$entry->value = $this->xmlenc(strval($value));
-												} break;
+												}
+												break;
 												case self::GAP_PRECEDING: {
 													$entry->value = $this->xmlenc(strval($value)) . $entry->value;
-												} break;
+												}
+												break;
 												case self::GAP_FOLLOWING:
 												case self::GAP_CHILD: {
 													$entry->value .= $this->xmlenc(strval($value));
-												} break;
+												}
+												break;
 											}
 										} elseif (($entry->nodeType == XML_CDATA_SECTION_NODE) && (gettype($value) != "object")) {
 											switch ($gap) {
 												case self::GAP_NONE: {
 													$entry->data = strval($value);
-												} break;
+												}
+												break;
 												case self::GAP_PRECEDING: {
-													$entry->insertData(0,strval($value));
-												} break;
+													$entry->insertData(0, strval($value));
+												}
+												break;
 												case self::GAP_FOLLOWING:
 												case self::GAP_CHILD: {
 													$entry->appendData(strval($value));
-												} break;
+												}
+												break;
 											}
 										} elseif (($entry->nodeType == XML_COMMENT_NODE) && ($gap == self::GAP_DATA)) {
-											if(gettype($value) == "object") {
+											if (gettype($value) == "object") {
 												$fvalue = "";
 												if ($value instanceof \DOMNodeList) {
-													foreach($value as $nodi) {
-														$doc = new \DOMDocument("1.0","utf-8");
+													foreach ($value as $nodi) {
+														$doc = new \DOMDocument("1.0", "utf-8");
 														$node = $doc->importNode($nodi, true);
 														$doc->appendChild($node);
 														$txt = $doc->saveXML();
@@ -388,43 +399,47 @@ class Document {
 													}
 												} else {
 													if ($value instanceof \DOMNode) {
-														$doc = new \DOMDocument("1.0","utf-8");
-														$node=$doc->importNode($value, true);
+														$doc = new \DOMDocument("1.0", "utf-8");
+														$node = $doc->importNode($value, true);
 														$doc->appendChild($node);
 														$txt = $doc->saveXML();
 														$fvalue = static::as_fragment($txt);
 													} else {
-														$this->doMsg("NView:  ". gettype($value). " not yet implemented for comment insertion.");
+														$this->doMsg("NView:  " . gettype($value) . " not yet implemented for comment insertion.");
 													}
 												}
-												$fvalue=str_replace(array("<!--","-->"),"", $value);
-												$entry->replaceData(0,$entry->length,$fvalue);
+												$fvalue = str_replace(array("<!--", "-->"), "", $value);
+												$entry->replaceData(0, $entry->length, $fvalue);
 											} else {
-												$fvalue=str_replace(array("<!--","-->"),"", $value);
-												$entry->replaceData(0,$entry->length,$fvalue);
+												$fvalue = str_replace(array("<!--", "-->"), "", $value);
+												$entry->replaceData(0, $entry->length, $fvalue);
 											}
 										} else {
 											if ($value instanceof \DOMNodeList) {
-												foreach($value as $nodi) {
+												foreach ($value as $nodi) {
 													$nodc = $nodi->cloneNode(true);
 													$node = $this->doc->importNode($nodc, true);
 													switch ($gap) {
 														case self::GAP_NONE: {
 															$entry->parentNode->replaceChild($node, $entry);
-														} break;
+														}
+														break;
 														case self::GAP_PRECEDING: {
 															$entry->parentNode->insertBefore($node, $entry);
-														} break;
+														}
+														break;
 														case self::GAP_FOLLOWING: {
 															if (is_null($entry->nextSibling)) {
 																$entry->parentNode->appendChild($node);
 															} else {
-																$entry->parentNode->insertBefore($node,$entry->nextSibling);
+																$entry->parentNode->insertBefore($node, $entry->nextSibling);
 															}
-														} break;
+														}
+														break;
 														case self::GAP_CHILD: {
 															$entry->appendChild($node);
-														} break;
+														}
+														break;
 													}
 												}
 											} else {
@@ -437,20 +452,24 @@ class Document {
 												switch ($gap) {
 													case self::GAP_NONE: {
 														$entry->parentNode->replaceChild($node, $entry);
-													} break;
+													}
+													break;
 													case self::GAP_PRECEDING: {
 														$entry->parentNode->insertBefore($node, $entry);
-													} break;
+													}
+													break;
 													case self::GAP_FOLLOWING: {
 														if (is_null($entry->nextSibling)) {
 															$entry->parentNode->appendChild($node);
 														} else {
-															$entry->parentNode->insertBefore($node,$entry->nextSibling);
+															$entry->parentNode->insertBefore($node, $entry->nextSibling);
 														}
-													} break;
+													}
+													break;
 													case self::GAP_CHILD: {
 														$entry->appendChild($node);
-													} break;
+													}
+													break;
 												}
 											}
 										}
@@ -468,9 +487,10 @@ class Document {
 					} else {
 						$this->doMsg("NView: Unknown value type of object " . gettype($value) . " found");
 					}
-				} break;
+				}
+				break;
 				default: { //treat as text.
-					$this->doMsg("NView: Unknown value type of object ". gettype($value) ." found");
+					$this->doMsg("NView: Unknown value type of object " . gettype($value) . " found");
 				}
 			}
 		} else {
@@ -484,7 +504,7 @@ class Document {
 	 * 'initDoc'
 	 */
 	private function initDoc() {
-		$this->doc = new \DOMDocument("1.0","utf-8");
+		$this->doc = new \DOMDocument("1.0", "utf-8");
 		$this->doc->preserveWhiteSpace = true;
 		$this->doc->formatOutput = false;
 	}
@@ -494,7 +514,7 @@ class Document {
 	 */
 	private function initXPath() {
 		$this->xp = new \DOMXPath($this->doc);
-		$this->xp->registerNamespace("h","http://www.w3.org/1999/xhtml");
+		$this->xp->registerNamespace("h", "http://www.w3.org/1999/xhtml");
 	}
 
 	/**
@@ -518,19 +538,19 @@ class Document {
 		} elseif ($value->nodeType == XML_ELEMENT_NODE) {
 			$this->initDoc();
 			if (empty($value->prefix)) {
-				$value->setAttribute("xmlns",$value->namespaceURI);
+				$value->setAttribute("xmlns", $value->namespaceURI);
 			} else {
-				$value->setAttribute("xmlns:".$value->prefix,$value->namespaceURI);
+				$value->setAttribute("xmlns:" . $value->prefix, $value->namespaceURI);
 			}
 			$node = $this->doc->importNode($value, true);
 			$this->doc->appendChild($node);
-			$olde= $value->ownerDocument->documentElement;
+			$olde = $value->ownerDocument->documentElement;
 			if ($olde->hasAttributes()) {
-				$myde= $this->doc->documentElement;
+				$myde = $this->doc->documentElement;
 				foreach ($olde->attributes as $attr) {
-					if (substr($attr->nodeName,0,6)=="xmlns:") {
+					if (substr($attr->nodeName, 0, 6) == "xmlns:") {
 						$myde->removeAttribute($attr->nodeName);
-						$natr = $this->doc->importNode($attr,true);
+						$natr = $this->doc->importNode($attr, true);
 						$myde->setAttributeNode($natr);
 					}
 				}
@@ -553,7 +573,7 @@ class Document {
 				$this->doc->loadXML($data);
 			} catch (\Exception $e) {
 				$this->doMsg("NView: File '" . $this->fname . "' was found but didn't parse " . $data);
-				$this->doMsg($e->getCode(),$e->getMessage(),$e->getFile(), $e->getLine());
+				$this->doMsg($e->getCode(), $e->getMessage(), $e->getFile(), $e->getLine());
 			}
 			$this->initXPath();
 		} else {
@@ -568,18 +588,18 @@ class Document {
 		// If there is no value, look for a file adjacent to this.
 		if (empty($value)) {
 			$this->con_file($value); //handle implicit in file..
-		} elseif (strpos($value,'<') === false) {
+		} elseif (strpos($value, '<') === false) {
 			$this->con_file($value);
 		} else {
 			// Treat value as xml to be parsed.
 			if (mb_check_encoding($value)) {
-				$wss   = array("\r\n", "\n", "\r", "\t"); //
-				$value = str_replace($wss,"", $value); //str_replace should be mb safe.
+				$wss = array("\r\n", "\n", "\r", "\t"); //
+				$value = str_replace($wss, "", $value); //str_replace should be mb safe.
 				$this->initDoc();
 				$this->doc->loadXML($value);
 				$this->initXPath();
 			} else {
-				$this->doc=NULL;
+				$this->doc = null;
 			}
 		}
 	}
@@ -588,15 +608,11 @@ class Document {
 	 * 'con_object'
 	 */
 	private function con_object($value) {
-		if ($value instanceof Document)
-		{
+		if ($value instanceof Document) {
 			$this->con_class($value);
-		}
-		elseif (is_subclass_of($value,'DOMNode'))
-		{
+		} elseif (is_subclass_of($value, 'DOMNode')) {
 			$this->con_node($value);
-		}
-		else {
+		} else {
 			$this->doMsg("NView: object constructor only uses instances of NView or subclasses of DOMNode.");
 		}
 	}
@@ -616,7 +632,7 @@ class Document {
 		$xq = "//*[not(node())][not(contains('[area|base|br|col|hr|img|input|link|meta|param|command|keygen|source]',local-name()))]";
 		$entries = $this->xp->query($xq);
 		if ($entries) {
-			foreach($entries as $entry) {
+			foreach ($entries as $entry) {
 				$entry->appendChild($this->doc->createTextNode(''));
 			}
 		}
@@ -626,7 +642,7 @@ class Document {
 	 * 'doMsg'
 	 * parser message handler..
 	 */
-	function doMsg($errno, $errstr='', $errfile='', $errline=0) {
+	function doMsg($errno, $errstr = '', $errfile = '', $errline = 0) {
 		//if(!is_null($this->log)){
 		//	$this->log->pushName("NView");
 		//	$this->log->error("$errno $errstr $errfile $errline");

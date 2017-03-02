@@ -73,27 +73,31 @@ class Factory implements FactoryContract {
 
 	/**
 	 * Get the evaluated view contents for the given view.
-
 	 *
-*@param  array  $data
+	 * @param  array  $data
 	 * @param  array  $mergeData
-	 * @param  string $view
+	 * @param  string $viewName
 	 * @return View
 	 */
-	public function make($view, $data = [], $mergeData = []) {
+	public function make($viewName, $data = [], $mergeData = []) {
 
-
-
-		$path = $this->finder->find(
-		  $view = $this->normalizeName($view)
-		);
+		// If the viewName is a string and is not a xml string
+		// Try and file the file
+		if (is_string($viewName) && strpos($viewName, '<') == false) {
+			$document = $this->finder->find(
+			  $viewName = $this->normalizeName($viewName)
+			);
+		} else {
+			$document = $viewName;
+			$viewName = null;
+		}
 
 		// Next, we will create the view instance and call the view creator for the view
 		// which can set any data, etc. Then we will return the view instance back to
 		// the caller for rendering or performing other view manipulations on this.
 		$data = array_merge($mergeData, $this->parseData($data));
 
-		return tap($this->viewInstance($view, $path, $data), function ($view) {
+		return tap($this->viewInstance($viewName, $document, $data), function ($view) {
 			$this->callCreator($view);
 		});
 	}
@@ -119,15 +123,15 @@ class Factory implements FactoryContract {
 	}
 
 	/**
-	 * Create a new view instance from the given arguments.
+	 * Create a new view instance from the given arguments
 	 *
-	 * @param  string $view
-	 * @param  string $path
-	 * @param  array  $data
+	 * @param  string|null $viewName
+	 * @param  mixed       $document
+	 * @param  array       $data
 	 * @return \Illuminate\Contracts\View\View
 	 */
-	protected function viewInstance($view, $path, $data) {
-		return new View($this, $view, $path, $data);
+	protected function viewInstance($viewName, $document, $data) {
+		return new View($this, $viewName, $document, $data);
 	}
 
 	/**

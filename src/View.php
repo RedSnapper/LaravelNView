@@ -48,13 +48,6 @@ class View implements ViewContract {
 	protected $data;
 
 	/**
-	 * The path to the view file.
-	 *
-	 * @var string
-	 */
-	protected $path;
-
-	/**
 	 * The prefix for all xPaths.
 	 *
 	 * @var string
@@ -86,15 +79,14 @@ class View implements ViewContract {
 	 *
 	 * @param Factory $factory
 	 * @param  string $viewName
-	 * @param  string $path
+	 * @param  mixed $document
 	 * @param  mixed  $data
 	 */
-	public function __construct(Factory $factory, $viewName, string $path, $data = []) {
-		$this->view = new Document($path);
+	public function __construct(Factory $factory, $viewName, $document, $data = []) {
+		$this->view = new Document($document);
 		$this->factory = $factory;
 		$this->container = $this->factory->getContainer();
 		$this->viewName = $viewName;
-		$this->path = $path;
 		$this->data = $data instanceof Arrayable ? $data->toArray() : (array)$data;
 	}
 
@@ -123,9 +115,10 @@ class View implements ViewContract {
 
 		$this->loadViewController($this->viewName);
 
+		$this->renderViewController();
+
 		$this->runCompilers();
 
-		$this->renderViewController();
 		$this->renderParent();
 
 		return $this->view;
@@ -137,7 +130,7 @@ class View implements ViewContract {
 	 * @return string
 	 */
 	public function name() {
-		return $this->viewName;
+		return $this->viewName ?? "(dynamic)";
 	}
 
 	/**
@@ -178,11 +171,10 @@ class View implements ViewContract {
 	/**
 	 * Add validation errors to the view.
 	 *
-	 * @param  \Illuminate\Contracts\Support\MessageProvider|array  $provider
+	 * @param  \Illuminate\Contracts\Support\MessageProvider|array $provider
 	 * @return $this
 	 */
-	public function withErrors($provider)
-	{
+	public function withErrors($provider) {
 		$this->with('errors', $this->formatErrors($provider));
 		return $this;
 	}
@@ -190,13 +182,12 @@ class View implements ViewContract {
 	/**
 	 * Format the given message provider into a MessageBag.
 	 *
-	 * @param  \Illuminate\Contracts\Support\MessageProvider|array  $provider
+	 * @param  \Illuminate\Contracts\Support\MessageProvider|array $provider
 	 * @return \Illuminate\Support\MessageBag
 	 */
-	protected function formatErrors($provider)
-	{
+	protected function formatErrors($provider) {
 		return $provider instanceof MessageProvider
-		  ? $provider->getMessageBag() : new MessageBag((array) $provider);
+		  ? $provider->getMessageBag() : new MessageBag((array)$provider);
 	}
 
 	/**
@@ -373,15 +364,14 @@ class View implements ViewContract {
 		// First check if we have a controller declared in our view
 		// Or try and load an associated controller by view name
 
-		if($controller = $this->view->get("/*/@{$this->prefix}controller")){
+		if ($controller = $this->view->get("/*/@{$this->prefix}controller")) {
 			$this->loadViewControllerClass($controller);
-		}else{
+		} else {
 			$this->loadViewControllerClass($viewName);
 		}
-
 	}
 
-	protected function loadViewControllerClass($name):bool{
+	protected function loadViewControllerClass($name): bool {
 		$class = $this->getViewControllerClassName($name);
 		if ($exists = class_exists($class)) {
 			$this->controller = $this->container->make($class);
@@ -444,7 +434,6 @@ class View implements ViewContract {
 
 	/**
 	 * Remove all prefixed attributes from the view
-
 	 */
 	protected function tidy() {
 		$this->view->set("//*/@*[starts-with(name(),'$this->prefix')]");
@@ -479,7 +468,8 @@ class View implements ViewContract {
 		$data = array_merge($this->factory->getShared(), $this->data);
 
 		foreach ($data as $key => $value) {
-			if ($value instanceof Renderable) {;
+			if ($value instanceof Renderable) {
+				;
 				$data[$key] = $value->compile();
 			}
 		}
