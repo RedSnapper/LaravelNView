@@ -2,11 +2,13 @@
 
 namespace RS\NView;
 
+use Illuminate\Contracts\Support\MessageProvider;
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Contracts\Support\Arrayable;
 use \Illuminate\Contracts\Container\Container;
 
 use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Support\MessageBag;
 
 class View implements ViewContract {
 
@@ -174,6 +176,30 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * Add validation errors to the view.
+	 *
+	 * @param  \Illuminate\Contracts\Support\MessageProvider|array  $provider
+	 * @return $this
+	 */
+	public function withErrors($provider)
+	{
+		$this->with('errors', $this->formatErrors($provider));
+		return $this;
+	}
+
+	/**
+	 * Format the given message provider into a MessageBag.
+	 *
+	 * @param  \Illuminate\Contracts\Support\MessageProvider|array  $provider
+	 * @return \Illuminate\Support\MessageBag
+	 */
+	protected function formatErrors($provider)
+	{
+		return $provider instanceof MessageProvider
+		  ? $provider->getMessageBag() : new MessageBag((array) $provider);
+	}
+
+	/**
 	 * Run call the compilers
 	 *
 	 * @return void
@@ -219,7 +245,7 @@ class View implements ViewContract {
 
 			$value = $this->getValue($attribute, $this->data);
 
-			$this->view->set('./child-gap()', e($value), $node);
+			$this->view->set('./child-gap()', $value, $node);
 		});
 	}
 
@@ -234,7 +260,7 @@ class View implements ViewContract {
 
 			$value = $this->getValue($attribute, $this->data);
 
-			$this->view->set('.', e($value), $node);
+			$this->view->set('.', $value, $node);
 		});
 	}
 
@@ -453,7 +479,7 @@ class View implements ViewContract {
 		$data = array_merge($this->factory->getShared(), $this->data);
 
 		foreach ($data as $key => $value) {
-			if ($value instanceof Renderable) {
+			if ($value instanceof Renderable) {;
 				$data[$key] = $value->compile();
 			}
 		}
