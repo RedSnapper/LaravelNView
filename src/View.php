@@ -329,19 +329,33 @@ class View implements ViewContract {
 
 			$array = $this->getValue($attribute, $this->data);
 
-			$name = $this->getNodeAttribute($node, 'name');
-
-			$template = $this->view->consume("./*[1]",$node);
-
-			foreach ($array as $value){
-				$item = $this->factory->make($template,array_merge($this->data,[$name=>$value]));
-				$this->view->set("./child-gap()",$item,$node);
-			}
+			count($array) ? $this->renderForEach($array,$node) : $this->removeNode($node);
 
 		});
 
 
-;	}
+	}
+
+	/**
+	 * Render using an array
+	 * @param array       $array
+	 * @param \DOMElement $node
+	 */
+	protected function renderForEach(array $array, \DOMElement $node ){
+
+		$name = $this->getNodeAttribute($node, 'name');
+
+		$template = $this->view->consume("./*[1]",$node);
+
+		foreach ($array as $value){
+			$item = $this->factory->make($template,array_merge($this->data,[$name=>$value]));
+			$this->view->set("./child-gap()",$item,$node);
+		}
+	}
+
+	protected function removeNode(\DOMElement $node){
+		$this->view->set(".",null,$node);
+	}
 
 	/**
 	 * Iterates through nodes which match the given token
