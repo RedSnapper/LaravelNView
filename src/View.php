@@ -69,6 +69,7 @@ class View implements ViewContract {
 	  ['token' => 'can', 'function' => 'Can'],
 	  ['token' => 'cannot', 'function' => 'Cannot'],
 	  ['token' => 'include', 'function' => 'Include'],
+	  ['token' => 'foreach', 'function' => 'ForEach'],
 	  ['token' => 'child', 'function' => 'ChildGap'],
 	  ['token' => 'text', 'function' => 'Text'],
 	  ['token' => 'tr', 'function' => 'Translations'],
@@ -179,6 +180,19 @@ class View implements ViewContract {
 		return $this;
 	}
 
+	public function set(string $xpath,$value = null,$ref = null){
+		$this->view->set($xpath,$this->formatDocument($value),$ref);
+	}
+
+	/**
+	 *
+	 * @param $value
+	 * @return mixed
+	 */
+	protected function formatDocument($value){
+		return $value instanceof self ? $value->compile() : $value;
+	}
+
 	/**
 	 * Format the given message provider into a MessageBag.
 	 *
@@ -237,6 +251,7 @@ class View implements ViewContract {
 			$value = $this->getValue($attribute, $this->data);
 
 			$this->view->set('./child-gap()', $value, $node);
+
 		});
 	}
 
@@ -303,6 +318,32 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * Compiles Foreach
+	 *
+	 * @return void
+	 */
+	protected function compileForEach() {
+
+
+		$this->compileNodes('foreach', function (\DOMElement $node, $attribute) {
+
+			$array = $this->getValue($attribute, $this->data);
+
+			$name = $this->getNodeAttribute($node, 'name');
+
+			$template = $this->view->consume("./*[1]",$node);
+
+			foreach ($array as $value){
+				$item = $this->factory->make($template,array_merge($this->data,[$name=>$value]));
+				$this->view->set("./child-gap()",$item,$node);
+			}
+
+		});
+
+
+;	}
+
+	/**
 	 * Iterates through nodes which match the given token
 	 *
 	 * @param          $token
@@ -317,7 +358,22 @@ class View implements ViewContract {
 
 			$attribute = $this->getNodeAttribute($node, $token);
 			$closure($node, $attribute);
+
+			// Remove the token from the node when we have used it
+			$this->removeAttributeFromNode($token,$node);
 		}
+	}
+
+	/**
+	 * Remove a prefixed attribute given a node
+	 *
+	 * @param string      $token
+	 * @param \DOMElement $node
+	 */
+	protected function removeAttributeFromNode(string $token, \DOMElement $node){
+
+		$this->view->set("./@{$this->prefix}$token", null, $node);
+
 	}
 
 	/**
@@ -356,10 +412,10 @@ class View implements ViewContract {
 	/**
 	 * Loads an associated controller given a view name
 	 *
-	 * @param string $viewName
+	 * @param string|null $viewName
 	 * @return void
 	 */
-	protected function loadViewController(string $viewName) {
+	protected function loadViewController($viewName) {
 
 		// First check if we have a controller declared in our view
 		// Or try and load an associated controller by view name
@@ -372,6 +428,11 @@ class View implements ViewContract {
 	}
 
 	protected function loadViewControllerClass($name): bool {
+
+		if(is_null($name)){
+			return false;
+		}
+
 		$class = $this->getViewControllerClassName($name);
 		if ($exists = class_exists($class)) {
 			$this->controller = $this->container->make($class);
