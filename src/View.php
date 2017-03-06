@@ -66,13 +66,13 @@ class View implements ViewContract {
 	 * @var array
 	 */
 	protected $compilers = [
-	  ['token' => 'can', 'function' => 'Can'],
-	  ['token' => 'cannot', 'function' => 'Cannot'],
-	  ['token' => 'include', 'function' => 'Include'],
-	  ['token' => 'foreach', 'function' => 'ForEach'],
-	  ['token' => 'child', 'function' => 'ChildGap'],
-	  ['token' => 'text', 'function' => 'Text'],
-	  ['token' => 'tr', 'function' => 'Translations'],
+	  'can'     => 'Can',
+	  'cannot'  => 'Cannot',
+	  'include' => 'Include',
+	  'foreach' => 'ForEach',
+	  'child'   => 'ChildGap',
+	  'text'    => 'Text',
+	  'tr'      => 'Translations'
 	];
 
 	/**
@@ -80,7 +80,7 @@ class View implements ViewContract {
 	 *
 	 * @param Factory $factory
 	 * @param  string $viewName
-	 * @param  mixed $document
+	 * @param  mixed  $document
 	 * @param  mixed  $data
 	 */
 	public function __construct(Factory $factory, $viewName, $document, $data = []) {
@@ -180,16 +180,15 @@ class View implements ViewContract {
 		return $this;
 	}
 
-	public function set(string $xpath,$value = null,$ref = null){
-		$this->view->set($xpath,$this->formatDocument($value),$ref);
+	public function set(string $xpath, $value = null, $ref = null) {
+		$this->view->set($xpath, $this->formatDocument($value), $ref);
 	}
 
 	/**
-	 *
 	 * @param $value
 	 * @return mixed
 	 */
-	protected function formatDocument($value){
+	protected function formatDocument($value) {
 		return $value instanceof self ? $value->compile() : $value;
 	}
 
@@ -211,15 +210,44 @@ class View implements ViewContract {
 	 */
 	protected function runCompilers() {
 
-		$tokens = $this->getTokensFromView();
+		$nodes = $this->getAllTokenNodes();
 
-		foreach ($this->compilers as $compiler) {
+		foreach ($nodes as $node) {
+			foreach ($node->attributes as $attrNode) {
 
-			if (in_array($compiler['token'], $tokens)) {
-				$compiler = "compile{$compiler['function']}";
-				$this->$compiler();
+				if ($token = $this->getCompilerTokenFromAttribute($attrNode)) {
+
+					$compiler = "compile{$this->compilers[$token]}";
+
+					$value = $this->getNodeAttribute($node, $token);
+					
+					$this->$compiler($node, $value);
+
+					$this->removeAttributeFromNode($node, $token);
+				}
 			}
 		}
+	}
+
+	protected function getCompilerTokenFromAttribute(\DOMAttr $attribute) {
+
+		$name = $attribute->name;
+
+		if (!starts_with($name, $this->prefix)) {
+			return false;
+		}
+
+		$token = substr($name, mb_strlen($this->prefix));
+
+		if ($this->isCompiler($token)) {
+			return $token;
+		}
+
+		return false;
+	}
+
+	protected function isCompiler(string $token): bool {
+		return isset($this->compilers[$token]);
 	}
 
 	/**
@@ -227,16 +255,14 @@ class View implements ViewContract {
 	 *
 	 * @return void
 	 */
-	protected function compileTranslations() {
+	protected function compileTranslations(\DOMElement $node,$attribute) {
 
 		$translator = $this->container->make('translator');
 
-		$this->compileNodes('tr', function (\DOMElement $node, $attribute) use ($translator) {
+		$translation = $translator->trans($attribute);
 
-			$translation = $translator->trans($attribute);
+		$this->view->set('.', $translation, $node);
 
-			$this->view->set('.', $translation, $node);
-		});
 	}
 
 	/**
@@ -244,15 +270,12 @@ class View implements ViewContract {
 	 *
 	 * @return void
 	 */
-	protected function compileChildGap() {
+	protected function compileChildGap(\DOMElement $node,$attribute) {
 
-		$this->compileNodes('child', function (\DOMElement $node, $attribute) {
+		$value = $this->getValue($attribute, $this->data);
 
-			$value = $this->getValue($attribute, $this->data);
+		$this->view->set('./child-gap()', $value, $node);
 
-			$this->view->set('./child-gap()', $value, $node);
-
-		});
 	}
 
 	/**
@@ -260,14 +283,12 @@ class View implements ViewContract {
 	 *
 	 * @return void
 	 */
-	protected function compileText() {
+	protected function compileText(\DOMElement $node,$attribute) {
 
-		$this->compileNodes('text', function (\DOMElement $node, $attribute) {
+		$value = $this->getValue($attribute, $this->data);
 
-			$value = $this->getValue($attribute, $this->data);
+		$this->view->set('.', $value, $node);
 
-			$this->view->set('.', $value, $node);
-		});
 	}
 
 	/**
@@ -275,16 +296,13 @@ class View implements ViewContract {
 	 *
 	 * @return void
 	 */
-	protected function compileCan() {
+	protected function compileCan(\DOMElement $node,$attribute) {
 
 		$gate = $this->container->make('Gate');
 
-		$this->compileNodes('can', function (\DOMElement $node, $attribute) use ($gate) {
-
-			if ($gate::denies($attribute)) {
-				$this->view->set('.', null, $node);
-			};
-		});
+		if ($gate::denies($attribute)) {
+			$this->view->set('.', null, $node);
+		};
 	}
 
 	/**
@@ -292,16 +310,14 @@ class View implements ViewContract {
 	 *
 	 * @return void
 	 */
-	protected function compileCannot() {
+	protected function compileCannot(\DOMElement $node,$attribute) {
 
 		$gate = $this->container->make('Gate');
 
-		$this->compileNodes('cannot', function (\DOMElement $node, $attribute) use ($gate) {
+		if ($gate::allows($attribute)) {
+			$this->view->set('.', null, $node);
+		};
 
-			if ($gate::allows($attribute)) {
-				$this->view->set('.', null, $node);
-			};
-		});
 	}
 
 	/**
@@ -309,12 +325,11 @@ class View implements ViewContract {
 	 *
 	 * @return void
 	 */
-	protected function compileInclude() {
+	protected function compileInclude(\DOMElement $node,$attribute) {
 
-		$this->compileNodes('include', function (\DOMElement $node, $attribute) {
-			$include = $this->factory->make($attribute, $this->data);
-			$this->view->set('.', $include->compile(), $node);
-		});
+		$include = $this->factory->make($attribute, $this->data);
+		$this->view->set('.', $include->compile(), $node);
+
 	}
 
 	/**
@@ -322,39 +337,33 @@ class View implements ViewContract {
 	 *
 	 * @return void
 	 */
-	protected function compileForEach() {
+	protected function compileForEach(\DOMElement $node,$attribute) {
 
-
-		$this->compileNodes('foreach', function (\DOMElement $node, $attribute) {
-
-			$array = $this->getValue($attribute, $this->data);
-
-			count($array) ? $this->renderForEach($array,$node) : $this->removeNode($node);
-
-		});
-
+		$array = $this->getValue($attribute, $this->data);
+		count($array) ? $this->renderForEach($array, $node) : $this->removeNode($node);
 
 	}
 
 	/**
 	 * Render using an array
+	 *
 	 * @param array       $array
 	 * @param \DOMElement $node
 	 */
-	protected function renderForEach(array $array, \DOMElement $node ){
+	protected function renderForEach(array $array, \DOMElement $node) {
 
 		$name = $this->getNodeAttribute($node, 'name');
 
-		$template = $this->view->consume("./*[1]",$node);
+		$template = $this->view->consume("./*[1]", $node);
 
-		foreach ($array as $value){
-			$item = $this->factory->make($template,array_merge($this->data,[$name=>$value]));
-			$this->view->set("./child-gap()",$item,$node);
+		foreach ($array as $value) {
+			$item = $this->factory->make($template, array_merge($this->data, [$name => $value]));
+			$this->view->set("./child-gap()", $item, $node);
 		}
 	}
 
-	protected function removeNode(\DOMElement $node){
-		$this->view->set(".",null,$node);
+	protected function removeNode(\DOMElement $node) {
+		$this->view->set(".", null, $node);
 	}
 
 	/**
@@ -374,20 +383,19 @@ class View implements ViewContract {
 			$closure($node, $attribute);
 
 			// Remove the token from the node when we have used it
-			$this->removeAttributeFromNode($token,$node);
+			$this->removeAttributeFromNode($token, $node);
 		}
 	}
 
 	/**
 	 * Remove a prefixed attribute given a node
 	 *
-	 * @param string      $token
 	 * @param \DOMElement $node
+	 * @param string      $token
 	 */
-	protected function removeAttributeFromNode(string $token, \DOMElement $node){
+	protected function removeAttributeFromNode(\DOMElement $node, string $token) {
 
 		$this->view->set("./@{$this->prefix}$token", null, $node);
-
 	}
 
 	/**
@@ -443,7 +451,7 @@ class View implements ViewContract {
 
 	protected function loadViewControllerClass($name): bool {
 
-		if(is_null($name)){
+		if (is_null($name)) {
 			return false;
 		}
 
@@ -532,6 +540,10 @@ class View implements ViewContract {
 		}
 
 		return array_unique($tokens);
+	}
+
+	protected function getAllTokenNodes(): \DOMNodeList {
+		return $this->view->getList("//*[@*[starts-with(name(),'$this->prefix')]]");
 	}
 
 	/**
