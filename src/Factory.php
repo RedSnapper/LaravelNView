@@ -288,4 +288,14 @@ class Factory implements FactoryContract {
 		$this->events->fire('creating: ' . $view->name(), [$view]);
 	}
 
+	/**
+	 * Call the composer for a given view.
+	 *
+	 * @param  \Illuminate\Contracts\View\View $view
+	 * @return void
+	 */
+	public function callComposer(ViewContract $view) {
+		$this->events->fire('composing: ' . $view->name(), [$view]);
+	}
+
 }

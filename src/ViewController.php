@@ -6,7 +6,6 @@ class ViewController {
 
 	protected $parent;
 
-
 	public function render(Document $view, array $data): Document {
 		return $view;
 	}
@@ -17,26 +16,21 @@ class ViewController {
 
 	/**
 	 * Bind data to the view before render.
-
 	 *
-*@param  View $view
+	 * @param  View $view
 	 * @return void
 	 */
 	public function compose(View $view) {
-
 	}
 
 	/**
 	 * Bind data to the view after render
-
 	 *
-*@param  View $view
+	 * @param  View $view
 	 * @return void
 	 */
 	public function creator(View $view) {
-
 	}
-
 
 	/**
 	 * @return bool

@@ -114,6 +114,8 @@ class View implements ViewContract {
 	 */
 	public function compile() {
 
+		$this->factory->callComposer($this);
+
 		$this->loadViewController($this->viewName);
 
 		$this->renderViewController();
@@ -236,21 +238,19 @@ class View implements ViewContract {
 					$this->$compiler($node, $value);
 
 					$tokens[] = $token;
-
 				}
 			}
 
-
-			if(count($tokens)){
+			if (count($tokens)) {
 				$this->removeAttributesFromNode($node);
 			}
-
 		}
 	}
 
 	/**
 	 * Returns the a compiler token for a given dom attribute
 	 * If there is no compiler then false is returned
+	 *
 	 * @param \DOMAttr $attribute
 	 * @return bool|string
 	 */
@@ -273,6 +273,7 @@ class View implements ViewContract {
 
 	/**
 	 * For a given token is there a compiler
+	 *
 	 * @param string $token
 	 * @return bool
 	 */
@@ -465,7 +466,7 @@ class View implements ViewContract {
 	 * @param string|null $name
 	 * @return bool
 	 */
-	protected function loadViewControllerClass(string $name=null): bool {
+	protected function loadViewControllerClass(string $name = null): bool {
 
 		if (is_null($name)) {
 			return false;
@@ -544,7 +545,6 @@ class View implements ViewContract {
 		$this->view->set("//*/@*[starts-with(name(),'$this->prefix')]");
 	}
 
-
 	/**
 	 * @return \DOMNodeList
 	 */
@@ -562,7 +562,6 @@ class View implements ViewContract {
 
 		foreach ($data as $key => $value) {
 			if ($value instanceof Renderable) {
-				;
 				$data[$key] = $value->compile();
 			}
 		}
