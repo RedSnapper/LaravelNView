@@ -66,13 +66,15 @@ class View implements ViewContract {
 	 * @var array
 	 */
 	protected $compilers = [
-	  'can'     => 'Can',
-	  'cannot'  => 'Cannot',
-	  'include' => 'Include',
-	  'foreach' => 'ForEach',
-	  'child'   => 'ChildGap',
-	  'text'    => 'Text',
-	  'tr'      => 'Translations'
+	  'can'        => 'Can',
+	  'cannot'     => 'Cannot',
+	  'include'    => 'Include',
+	  'pagination' => 'Pagination',
+	  'foreach'    => 'ForEach',
+	  'url'        => 'URL',
+	  'child'      => 'ChildGap',
+	  'text'       => 'Text',
+	  'tr'         => 'Translations'
 	];
 
 	/**
@@ -227,6 +229,10 @@ class View implements ViewContract {
 
 			$tokens = [];
 
+			if ($this->nodeIsRemoved($node)) {
+				continue;
+			}
+
 			foreach ($node->attributes as $attrNode) {
 
 				if ($token = $this->getCompilerTokenFromAttribute($attrNode)) {
@@ -244,7 +250,9 @@ class View implements ViewContract {
 			if (count($tokens)) {
 				$this->removeAttributesFromNode($node);
 			}
+
 		}
+
 	}
 
 	/**
@@ -371,6 +379,40 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * URL
+	 *
+	 * @param \DOMElement $node
+	 * @param             $attribute
+	 * @return void
+	 */
+	protected function compileURL(\DOMElement $node, $attribute) {
+
+		$url = preg_replace_callback('/{([\d\w\.]+)}/', function ($matches) {
+			return $this->getValue($matches[1], $this->data);
+		}, $attribute);
+
+		$this->view->set('./@href', $url, $node);
+	}
+
+	/**
+	 * Pagination
+	 *
+	 * @param \DOMElement $node
+	 * @param             $attribute
+	 * @return void
+	 */
+	protected function compilePagination(\DOMElement $node, $attribute) {
+
+		$paginator = $this->getValue($this->getNodeAttribute($node, 'name'), $this->data);
+
+		if($paginator->hasPages()){
+			$include = $this->factory->make($attribute, $this->data, compact('paginator'));
+			$this->view->set('.', $include->compile(), $node);
+		}
+
+	}
+
+	/**
 	 * Compiles Foreach
 	 *
 	 * @param \DOMElement $node
@@ -386,10 +428,10 @@ class View implements ViewContract {
 	/**
 	 * Render using an array
 	 *
-	 * @param array       $array
+	 * @param             $array
 	 * @param \DOMElement $node
 	 */
-	protected function renderForEach(array $array, \DOMElement $node) {
+	protected function renderForEach($array, \DOMElement $node) {
 
 		$name = $this->getNodeAttribute($node, 'name');
 
@@ -546,10 +588,14 @@ class View implements ViewContract {
 	}
 
 	/**
-	 * @return \DOMNodeList
+	 * @return array
 	 */
-	protected function getAllTokenNodes(): \DOMNodeList {
-		return $this->view->getList("//*[@*[starts-with(name(),'$this->prefix')]]");
+	protected function getAllTokenNodes(): array {
+		return iterator_to_array($this->view->getList("//*[@*[starts-with(name(),'$this->prefix')]]"));
+	}
+
+	protected function nodeIsRemoved(\DOMNode $node): bool {
+		return !isset($node->nodeType);
 	}
 
 	/**
