@@ -66,6 +66,7 @@ class View implements ViewContract {
 	 * @var array
 	 */
 	protected $compilers = [
+	  'container'=>'Container',
 	  'can'        => 'Can',
 	  'cannot'     => 'Cannot',
 	  'include'    => 'Include',
@@ -395,6 +396,33 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * Container
+	 *
+	 * @param \DOMElement $node
+	 * @param             $attribute
+	 * @return void
+	 */
+	protected function compileContainer(\DOMElement $node, $attribute) {
+
+
+		$container = $this->factory->make($attribute, $this->data);
+
+		$this->removeAttributeFromNode('container',$node);
+
+		$child = $this->factory->make($this->view->get('.',$node),$this->data);
+
+		$containerView = $container->compile();
+
+		if ($container->hasController()) {
+			$view = $container->getController()->renderChild($containerView, $child->compile(), $this->data);
+			$this->view->set('.',$view,$node);
+		}
+
+
+	}
+
+
+	/**
 	 * Pagination
 	 *
 	 * @param \DOMElement $node
@@ -458,8 +486,17 @@ class View implements ViewContract {
 	 * @param \DOMElement $node
 	 */
 	protected function removeAttributesFromNode(\DOMElement $node) {
-
 		$this->view->set("./@*[starts-with(name(),'$this->prefix')]", null, $node);
+	}
+
+	/**
+	 * Remove a prefixed attribute given a node
+	 *
+	 * @param string      $token
+	 * @param \DOMElement $node
+	 */
+	protected function removeAttributeFromNode(string $token, \DOMElement $node){
+		$this->view->set("./@{$this->prefix}$token", null, $node);
 	}
 
 	/**
