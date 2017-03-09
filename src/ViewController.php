@@ -10,10 +10,6 @@ class ViewController {
 		return $view;
 	}
 
-	public function renderChild(Document $view, Document $child, array $data): Document {
-		return $view;
-	}
-
 	/**
 	 * Bind data to the view before render.
 	 *

@@ -9,9 +9,6 @@ class DummyClass extends ViewController{
 
    public function render(Document $view,array $data): Document {
    		return $view;
-   	}
+   }
 
-   	public function renderChild(Document $view, Document $child, array $data): Document {
-   		return $view;
-   	}
 }

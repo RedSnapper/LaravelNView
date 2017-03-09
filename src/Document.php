@@ -345,10 +345,13 @@ class Document {
 
 								if ($value instanceof Document) {
 									if ($gap !== self::GAP_DATA) {
-										$value = $value->doc->documentElement;
+										$value = $value->doc;
 									} else {
 										$value = $value->show(false);
 									}
+								}
+								if($value instanceof \DOMDocument) {
+									$value = $value->documentElement;
 								}
 								foreach ($entries as $entry) {
 									if ($gap == self::GAP_NATTR && $entry->nodeType == XML_ELEMENT_NODE && isset($aname)) {
