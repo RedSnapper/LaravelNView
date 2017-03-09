@@ -28,6 +28,13 @@ class View implements ViewContract {
 	const DEFAULT_SECTION = "#document";
 
 	/**
+	 * Child content
+	 *
+	 * @var null|Document
+	 */
+	protected $child;
+
+	/**
 	 * The factory
 	 *
 	 * @var Factory
@@ -46,7 +53,7 @@ class View implements ViewContract {
 	 *
 	 * @var Document
 	 */
-	protected $document;
+	public $document;
 
 	/**
 	 * The name of the view.
@@ -96,7 +103,7 @@ class View implements ViewContract {
 	 */
 	protected $compilers = [
 	  'container'  => 'Container',
-	  'contents'   => 'Contents',
+	  //'contents'   => 'Contents',
 	  'can'        => 'Can',
 	  'cannot'     => 'Cannot',
 	  'include'    => 'Include',
@@ -104,7 +111,7 @@ class View implements ViewContract {
 	  'foreach'    => 'ForEach',
 	  'url'        => 'URL',
 	  'child'      => 'ChildGap',
-	  'replace'       => 'Replace',
+	  'replace'    => 'Replace',
 	  'tr'         => 'Translations'
 	];
 
@@ -149,18 +156,18 @@ class View implements ViewContract {
 	 */
 	public function compile() {
 
-		if($this->isCompiled()){
+		if ($this->isCompiled()) {
 			return $this->document;
 		}
 
 		$this->factory->callComposer($this);
 
+		// Need to render children first
+		$this->renderChildren();
+
 		$this->renderViewController();
 
 		$this->runCompilers();
-
-		$this->renderContainers();
-
 
 		return $this->document;
 	}
@@ -193,10 +200,34 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * Has this view already be compiled
+	 *
 	 * @return bool
 	 */
 	public function isCompiled(): bool {
 		return $this->compiled;
+	}
+
+	/**
+	 * @return null|Document
+	 */
+	public function getChild() {
+		return $this->child;
+	}
+
+	/**
+	 * @param null|Document $child
+	 */
+	public function setChild(Document $child) {
+		$this->child = $child;
+	}
+
+	/**
+	 * Does this view have a child
+	 * @return bool
+	 */
+	public function hasChild(): bool {
+		return isset($this->child);
 	}
 
 	/**
@@ -278,15 +309,14 @@ class View implements ViewContract {
 
 			foreach ($compilers as $compiler) {
 
-				list($fn,$node,$attribute) =$compiler;
+				list($fn, $node, $attribute) = $compiler;
 
-				$this->$fn($node,$attribute);
+				$this->$fn($node, $attribute);
 			}
 
 			if (count($compilers)) {
 				$this->removeAttributesFromNode($node);
 			}
-
 		}
 	}
 
@@ -296,9 +326,9 @@ class View implements ViewContract {
 	 * @param \DOMNode $node
 	 * @return array
 	 */
-	protected function getCompilers(\DOMNode $node):array{
+	protected function getCompilers(\DOMNode $node): array {
 
-		return array_reduce(iterator_to_array($node->attributes),function($carry,\DOMAttr $attr) use ($node){
+		return array_reduce(iterator_to_array($node->attributes), function ($carry, \DOMAttr $attr) use ($node) {
 
 			if ($token = $this->getCompilerTokenFromAttribute($attr)) {
 
@@ -310,9 +340,7 @@ class View implements ViewContract {
 			}
 
 			return $carry;
-
-		},[]);
-
+		}, []);
 	}
 
 	/**
@@ -503,28 +531,6 @@ class View implements ViewContract {
 	}
 
 	/**
-	 * Compiles contents (implicit parent)
-	 *
-	 * @param \DOMElement $node
-	 * @param             $attribute
-	 * @return void
-	 */
-	protected function compileContents(\DOMElement $node, $attribute) {
-		$context = $this->getValue(static::CONTEXT,$this->data);
-
-		if($attribute !== static::DEFAULT_SECTION) {
-			$xpath = "//*[@{$this->prefix}section='$attribute']";
-			$section = $context->document->get($xpath);
-			if(!is_null($section)) {
-				$section->documentElement->removeAttribute("{$this->prefix}section");
-			}
-		} else {
-			$section = $context->document;
-		}
-		$this->document->set('.',$section,$node);
-	}
-
-	/**
 	 * Container
 	 *
 	 * @param \DOMElement $node
@@ -532,19 +538,66 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function compileContainer(\DOMElement $node, $attribute) {
-		$this->containers[]=['node'=>$node,'name'=>$attribute];
+
+		// Load up our container
+		$container = $this->factory->make($attribute, $this->data);
+
+		//Remove container attribute
+		$this->removeAttributeFromNode('container', $node);
+
+		// Pass this node to the container
+		$container->setChild($this->factory->make($node, $this->data)->compile());
+
+		// Replace the current node with the container
+		$this->document->set('.', $container, $node);
 	}
 
-	protected function renderContainers() {
-		foreach ($this->containers as $container) {
-			$node = $container['node'];
-			if(!$this->nodeIsRemoved($node)) {
-				$name = $container['name'];
-				$containerView = $this->factory->make($name,$this->data);
-				$containerDoc = $containerView->with(static::CONTEXT,$this)->compile();
-				$this->document->set('.',$containerDoc,$node);
-			}
+	/**
+	 * If we have a child set then we need to first insert child into
+	 * the document in the appropriate content sections before parsing the rest of the document
+	 */
+	protected function renderChildren(){
+
+		if(!$this->hasChild()) {
+			return;
 		}
+
+		// Get all the contents nodes
+		$nodes = $this->document->getList("//*[@{$this->prefix}contents]");
+
+		foreach ($nodes as $node) {
+
+			$attribute = $node->getAttribute("{$this->prefix}contents");
+
+			$section = $this->getSectionFromDocument($attribute);
+
+			// Replace the current node with content from the child
+			$this->document->set('.', $section, $node);
+		}
+	}
+
+	/**
+	 * @param string $attribute
+	 * @return mixed
+	 */
+	protected function getSectionFromDocument(string $attribute){
+		$child = $this->getChild();
+
+		// Default section so just return the whole document
+		if ($attribute === static::DEFAULT_SECTION) {
+			return $child;
+		}
+
+		//Get the corresponding section from the child
+		$section = $child->get("//*[@{$this->prefix}section='$attribute']");
+
+		// If found in the child remove the section attribute
+		if (!is_null($section)) {
+			$section->documentElement->removeAttribute("{$this->prefix}section");
+		}
+
+		return $section;
+
 	}
 
 	/**
@@ -651,7 +704,6 @@ class View implements ViewContract {
 		return $this->container->getNamespace() . "View\\" . implode('\\', $parts);
 	}
 
-
 	/**
 	 * Calls the render method on the associated controller
 	 */
@@ -667,7 +719,7 @@ class View implements ViewContract {
 	 * Remove all prefixed attributes from the view
 	 */
 	protected function tidy() {
-		$this->document->set("//*/@*[starts-with(name(),'$this->prefix')]");
+		//$this->document->set("//*/@*[starts-with(name(),'$this->prefix')]");
 	}
 
 	/**
