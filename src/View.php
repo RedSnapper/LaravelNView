@@ -110,6 +110,7 @@ class View implements ViewContract {
 	  'pagination' => 'Pagination',
 	  'foreach'    => 'ForEach',
 	  'url'        => 'URL',
+	  'asset'      => 'Asset',
 	  'child'      => 'ChildGap',
 	  'replace'    => 'Replace',
 	  'tr'         => 'Translations'
@@ -465,10 +466,9 @@ class View implements ViewContract {
 
 		$auth = $this->container->make('Auth');
 
-		if($auth::check() != filter_var($attribute, FILTER_VALIDATE_BOOLEAN)){
+		if ($auth::check() != filter_var($attribute, FILTER_VALIDATE_BOOLEAN)) {
 			$this->document->set('.', null, $node);
 		}
-
 	}
 
 	/**
@@ -498,6 +498,22 @@ class View implements ViewContract {
 		}, $attribute);
 
 		$this->document->set('./@href', $url, $node);
+	}
+
+	/**
+	 * Asset
+	 *
+	 * @param \DOMElement $node
+	 * @param             $attribute
+	 * @return void
+	 */
+	protected function compileAsset(\DOMElement $node, $attribute) {
+
+		$url = $this->container->make('url');
+
+		$property = $node->tagName == "link" ? "href" : "src";
+
+		$this->document->set("./@{$property}", $url->asset($attribute), $node);
 	}
 
 	/**
