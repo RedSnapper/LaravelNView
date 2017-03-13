@@ -103,7 +103,7 @@ class View implements ViewContract {
 	 */
 	protected $compilers = [
 	  'container'  => 'Container',
-	  //'contents'   => 'Contents',
+	  'auth'       => 'Auth',
 	  'can'        => 'Can',
 	  'cannot'     => 'Cannot',
 	  'include'    => 'Include',
@@ -224,6 +224,7 @@ class View implements ViewContract {
 
 	/**
 	 * Does this view have a child
+	 *
 	 * @return bool
 	 */
 	public function hasChild(): bool {
@@ -454,6 +455,23 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * Is the user logged in
+	 *
+	 * @param \DOMElement $node
+	 * @param             $attribute
+	 * @return void
+	 */
+	protected function compileAuth(\DOMElement $node, $attribute) {
+
+		$auth = $this->container->make('Auth');
+
+		if($auth::check() != filter_var($attribute, FILTER_VALIDATE_BOOLEAN)){
+			$this->document->set('.', null, $node);
+		}
+
+	}
+
+	/**
 	 * Includes
 	 *
 	 * @param \DOMElement $node
@@ -556,9 +574,9 @@ class View implements ViewContract {
 	 * If we have a child set then we need to first insert child into
 	 * the document in the appropriate content sections before parsing the rest of the document
 	 */
-	protected function renderChildren(){
+	protected function renderChildren() {
 
-		if(!$this->hasChild()) {
+		if (!$this->hasChild()) {
 			return;
 		}
 
@@ -580,7 +598,7 @@ class View implements ViewContract {
 	 * @param string $attribute
 	 * @return mixed
 	 */
-	protected function getSectionFromDocument(string $attribute){
+	protected function getSectionFromDocument(string $attribute) {
 		$child = $this->getChild();
 
 		// Default section so just return the whole document
@@ -597,7 +615,6 @@ class View implements ViewContract {
 		}
 
 		return $section;
-
 	}
 
 	/**
