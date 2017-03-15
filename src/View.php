@@ -763,7 +763,7 @@ class View implements ViewContract {
 	}
 
 	protected function nodeIsRemoved(\DOMNode $node): bool {
-		return !isset($node->nodeType);
+		return !isset($node->nodeType) || !isset($node->parentNode);
 	}
 
 	/**
