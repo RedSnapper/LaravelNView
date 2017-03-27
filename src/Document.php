@@ -588,7 +588,7 @@ class Document {
 	 * 'con_string'
 	 */
 	private function con_string($value) {
-		// If there is no value, look for a file adjacent to this.
+
 		if (empty($value)) {
 			$this->con_file($value); //handle implicit in file..
 		} elseif (strpos($value, '<') === false) {

@@ -125,13 +125,27 @@ class View implements ViewContract {
 	 * @param  mixed  $data
 	 */
 	public function __construct(Factory $factory, $viewName, $document, $data = []) {
-		$this->document = new Document($document);
+
 		$this->factory = $factory;
+		$this->document = $this->initialiseDocument($document);
 		$this->container = $this->factory->getContainer();
 		$this->viewName = $viewName;
 		$this->data = $data instanceof Arrayable ? $data->toArray() : (array)$data;
 
 		$this->loadViewController($this->viewName);
+	}
+
+	protected function initialiseDocument($name){
+
+		if(is_string($name) && $this->factory->hasDocument($name)){
+			return $this->factory->getDocument($name);
+		}
+
+		if(is_string($name)){
+			$this->factory->addDocument($name,new Document($name));
+		}
+
+		return new Document($name);
 	}
 
 	/**

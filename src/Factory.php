@@ -44,6 +44,12 @@ class Factory implements FactoryContract {
 	protected $shared = [];
 
 	/**
+	 * Cached documents which have been initialised
+	 * @var array
+	 */
+	protected $cache = [];
+
+	/**
 	 * Create a new view factory instance.
 	 *
 	 * @param  \Illuminate\View\ViewFinderInterface    $finder
@@ -296,6 +302,37 @@ class Factory implements FactoryContract {
 	 */
 	public function callComposer(ViewContract $view) {
 		$this->events->fire('composing: ' . $view->name(), [$view]);
+	}
+
+
+	/**
+	 * Add a document to the cache
+	 *
+	 * @param string $name
+	 * @param Document $document
+	 */
+	public function addDocument(string $name , Document $document) {
+		$this->cache[$name] = $document;
+	}
+
+	/**
+	 * Is document in the cache
+	 *
+	 * @param string $name
+	 * @return bool
+	 */
+	public function hasDocument(string $name):bool{
+		return isset($this->cache[$name]);
+	}
+
+	/**
+	 * Get document from the cache
+	 *
+	 * @param string $name
+	 * @return Document|null
+	 */
+	public function getDocument(string $name){
+		return new Document($this->cache[$name]);
 	}
 
 }
