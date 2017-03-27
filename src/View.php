@@ -95,6 +95,8 @@ class View implements ViewContract {
 	 */
 	protected $containers = [];
 
+	protected $nodeRemoved = false;
+
 	/**
 	 * An array of tokens and associatedCompilers
 	 * Compilers will be run in this order
@@ -136,6 +138,7 @@ class View implements ViewContract {
 	}
 
 	protected function initialiseDocument($name){
+
 
 		if(is_string($name) && $this->factory->hasDocument($name)){
 			return $this->factory->getDocument($name);
@@ -317,6 +320,10 @@ class View implements ViewContract {
 
 		foreach ($nodes as $node) {
 
+			if($this->nodeRemoved){
+				break;
+			}
+
 			if ($this->nodeIsRemoved($node)) {
 				continue;
 			}
@@ -333,6 +340,11 @@ class View implements ViewContract {
 			if (count($compilers)) {
 				$this->removeAttributesFromNode($node);
 			}
+		}
+
+		if($this->nodeRemoved){
+			$this->nodeRemoved = false;
+			$this->runCompilers();
 		}
 	}
 
@@ -598,6 +610,10 @@ class View implements ViewContract {
 
 		// Replace the current node with the container
 		$this->document->set('.', $container, $node);
+
+		// Let the compilers know that part of the document has been removed
+		// So need to check again for tokens in the view
+		$this->nodeRemoved = true;
 	}
 
 	/**
@@ -766,7 +782,7 @@ class View implements ViewContract {
 	 * Remove all prefixed attributes from the view
 	 */
 	protected function tidy() {
-		//$this->document->set("//*/@*[starts-with(name(),'$this->prefix')]");
+		$this->document->set("//*/@*[starts-with(name(),'$this->prefix')]");
 	}
 
 	/**
