@@ -95,7 +95,7 @@ class View implements ViewContract {
 	 */
 	protected $containers = [];
 
-	protected $nodeRemoved = false;
+//	protected $nodeRemoved = false;
 
 	/**
 	 * An array of tokens and associatedCompilers
@@ -105,6 +105,7 @@ class View implements ViewContract {
 	 */
 	protected $compilers = [
 	  'container'  => 'Container',
+	  'errors'		 => 'Errors',
 	  'auth'       => 'Auth',
 	  'can'        => 'Can',
 	  'cannot'     => 'Cannot',
@@ -141,10 +142,12 @@ class View implements ViewContract {
 
 
 		if(is_string($name) && $this->factory->hasDocument($name)){
+//			print("$name<br />");
 			return $this->factory->getDocument($name);
 		}
 
 		if(is_string($name)){
+//			print("$name<br />");
 			$this->factory->addDocument($name,new Document($name));
 		}
 
@@ -320,10 +323,6 @@ class View implements ViewContract {
 
 		foreach ($nodes as $node) {
 
-			if($this->nodeRemoved){
-				break;
-			}
-
 			if ($this->nodeIsRemoved($node)) {
 				continue;
 			}
@@ -342,10 +341,6 @@ class View implements ViewContract {
 			}
 		}
 
-		if($this->nodeRemoved){
-			$this->nodeRemoved = false;
-			$this->runCompilers();
-		}
 	}
 
 	/**
@@ -420,6 +415,21 @@ class View implements ViewContract {
 
 		$this->document->set('.', $translation, $node);
 	}
+	/**
+	 * Compiles errors
+	 *
+	 * @param \DOMElement $node
+	 * @param             $attribute
+	 * @return void
+	 */
+	protected function compileErrors(\DOMElement $node, $attribute) {
+		if(count($this->data['errors']) > 0) {
+			$errorView = $this->factory->make($attribute, $this->data);
+			$this->document->set('.', $errorView->compile(), $node);
+		} else {
+			$this->document->set('.', null, $node);
+		}
+	}
 
 	/**
 	 * Compiles child-gap
@@ -462,6 +472,7 @@ class View implements ViewContract {
 
 		if ($gate::denies($attribute)) {
 			$this->document->set('.', null, $node);
+			$this->deleteDescendants($node);
 		};
 	}
 
@@ -478,6 +489,7 @@ class View implements ViewContract {
 
 		if ($gate::allows($attribute)) {
 			$this->document->set('.', null, $node);
+			$this->deleteDescendants($node);
 		};
 	}
 
@@ -494,6 +506,7 @@ class View implements ViewContract {
 
 		if ($auth::check() != filter_var($attribute, FILTER_VALIDATE_BOOLEAN)) {
 			$this->document->set('.', null, $node);
+			$this->deleteDescendants($node);
 		}
 	}
 
@@ -508,6 +521,7 @@ class View implements ViewContract {
 
 		$include = $this->factory->make($attribute, $this->data);
 		$this->document->set('.', $include->compile(), $node);
+		$this->deleteDescendants($node);
 	}
 
 	/**
@@ -522,7 +536,6 @@ class View implements ViewContract {
 		$url = preg_replace_callback('/{([\d\w\.]+)}/', function ($matches) {
 			return $this->getValue($matches[1], $this->data);
 		}, $attribute);
-
 		$this->document->set('./@href', $url, $node);
 	}
 
@@ -611,9 +624,18 @@ class View implements ViewContract {
 		// Replace the current node with the container
 		$this->document->set('.', $container, $node);
 
+		$this->deleteDescendants($node);
+
 		// Let the compilers know that part of the document has been removed
 		// So need to check again for tokens in the view
-		$this->nodeRemoved = true;
+		//$this->nodeRemoved = true;
+	}
+
+	private function deleteDescendants(\DomNode $node) {
+		while($node->firstChild) {
+			$this->deleteDescendants($node->firstChild);
+			$node->removeChild($node->firstChild);
+		}
 	}
 
 	/**
@@ -793,7 +815,7 @@ class View implements ViewContract {
 	}
 
 	protected function nodeIsRemoved(\DOMNode $node): bool {
-		return !isset($node->nodeType) || !isset($node->parentNode);
+		return !isset($node->parentNode); //!isset($node->nodeType) ||
 	}
 
 	/**
