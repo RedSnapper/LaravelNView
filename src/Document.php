@@ -27,16 +27,17 @@ class Document {
 	/**
 	 * '__clone'
 	 */
-	public function __clone() {
-		$this->initDoc();
-		$this->doc = $this->doc->cloneNode(true);
-		$this->initXPath();
-	}
+	//public function __clone() {
+	//	return new Document($this);
+	//	//$this->initDoc();
+	//	//$this->doc = $this->doc->cloneNode(true);
+	//	//$this->initXpath();
+	//}
 
 	/**
 	 * NView constructor.
 	 *
-	 * @param string $value
+	 * @param mixed $value
 	 */
 	public function __construct($value = '') {
 
@@ -45,11 +46,11 @@ class Document {
 			switch (gettype($value)) {
 				case 'NULL':
 				case 'string': {
-					$this->con_string($value);
+					$this->conString($value);
 				}
 				break;
 				case 'object': {
-					$this->con_object($value);
+					$this->conObject($value);
 				}
 				break;
 				case 'resource': {
@@ -57,7 +58,7 @@ class Document {
 					while (!feof($value)) {
 						$contents .= fread($value, 1024);
 					}
-					$this->con_string($contents);
+					$this->conString($contents);
 				}
 				break;
 				default: {
@@ -88,7 +89,7 @@ class Document {
 			$this->doc->save('php://output');
 			$retval = ob_get_clean();
 			if (!$whole_doc) {
-				$retval = static::as_fragment($retval);
+				$retval = static::asFragment($retval);
 			}
 		}
 		return $retval;
@@ -107,13 +108,13 @@ class Document {
 	}
 
 	/**
-	 * 'as_fragment'
+	 * 'asFragment'
 	 */
-	public static function as_fragment($docstr) {
-		$s1 = '/<\?xml[^?]+\?>/';
-		$s2 = '/<!DOCTYPE \w+>/';
-		$s3 = '/\sxmlns="http:\/\/www.w3.org\/1999\/xhtml"/';
-		$ksub = array($s1, $s2, $s3);
+	public static function asFragment($docstr) {
+		$xmlDeclaration = '/<\?xml[^?]+\?>/';
+		$docTypeDeclaration = '/<!DOCTYPE \w+>/';
+		$namespaceValue = '/\sxmlns="http:\/\/www.w3.org\/1999\/xhtml"/';
+		$ksub = array($xmlDeclaration, $docTypeDeclaration, $namespaceValue);
 		return trim(preg_replace($ksub, '', $docstr));
 	}
 
@@ -229,8 +230,10 @@ class Document {
 								foreach ($olde->attributes as $attr) {
 									if (substr($attr->nodeName, 0, 6) == "xmlns:") {
 										$myde->removeAttribute($attr->nodeName);
-										$natr = $retval->importNode($attr, true);
-										$myde->setAttributeNode($natr);
+										$natr = $retval->importNode($attr, true); //can return false.
+										if($natr) {
+											$myde->setAttributeNode($natr);
+										}
 									}
 								}
 							}
@@ -398,7 +401,7 @@ class Document {
 														$node = $doc->importNode($nodi, true);
 														$doc->appendChild($node);
 														$txt = $doc->saveXML();
-														$fvalue .= static::as_fragment($txt);
+														$fvalue .= static::asFragment($txt);
 													}
 												} else {
 													if ($value instanceof \DOMNode) {
@@ -406,7 +409,7 @@ class Document {
 														$node = $doc->importNode($value, true);
 														$doc->appendChild($node);
 														$txt = $doc->saveXML();
-														$fvalue = static::as_fragment($txt);
+														$fvalue = static::asFragment($txt);
 													} else {
 														$this->doMsg("NView:  " . gettype($value) . " not yet implemented for comment insertion.");
 													}
@@ -513,31 +516,32 @@ class Document {
 	}
 
 	/**
-	 * 'initXPath'
+	 * 'initXpath'
 	 */
-	private function initXPath() {
+	private function initXpath() {
 		$this->xp = new \DOMXPath($this->doc);
 		$this->xp->registerNamespace("h", "http://www.w3.org/1999/xhtml");
 	}
 
 	/**
-	 * 'con_class'
+	 * 'conClass'
 	 */
-	private function con_class($value) {
+	private function conClass($value) {
 		if (!is_null($value->doc)) {
 			$this->initDoc();
 			$this->doc = $value->doc->cloneNode(true);
-			$this->initXPath();
+			$this->initXpath();
 		}
 	}
 
+
 	/**
-	 * 'con_node'
+	 * 'conNode'
 	 */
-	private function con_node($value) {
+	private function conNode($value) {
 		if ($value->nodeType == XML_DOCUMENT_NODE) {
 			$this->doc = $value->cloneNode(true);
-			$this->initXPath();
+			$this->initXpath();
 		} elseif ($value->nodeType == XML_ELEMENT_NODE) {
 			$this->initDoc();
 			if (empty($value->prefix)) {
@@ -558,16 +562,16 @@ class Document {
 					}
 				}
 			}
-			$this->initXPath();
+			$this->initXpath();
 		} else {
 			$this->doMsg("NView:: __construct does not (yet) support construction from nodes of type " . $value->nodeType);
 		}
 	}
 
 	/**
-	 * 'con_file'
+	 * 'conFile'
 	 */
-	private function con_file($value) {
+	private function conFile($value) {
 		$this->fname = $value;
 		if ($this->fname !== false) {
 			$this->initDoc();
@@ -578,21 +582,21 @@ class Document {
 				$this->doMsg("NView: File '" . $this->fname . "' was found but didn't parse " . $data);
 				$this->doMsg($e->getCode(), $e->getMessage(), $e->getFile(), $e->getLine());
 			}
-			$this->initXPath();
+			$this->initXpath();
 		} else {
 			$this->doMsg("NView: File '" . $value . "' wasn't found. ");
 		}
 	}
 
 	/**
-	 * 'con_string'
+	 * 'conString'
 	 */
-	private function con_string($value) {
+	private function conString($value) {
 
 		if (empty($value)) {
-			$this->con_file($value); //handle implicit in file..
+			$this->conFile($value); //handle implicit in file..
 		} elseif (strpos($value, '<') === false) {
-			$this->con_file($value);
+			$this->conFile($value);
 		} else {
 			// Treat value as xml to be parsed.
 			if (mb_check_encoding($value)) {
@@ -600,7 +604,7 @@ class Document {
 				$value = str_replace($wss, "", $value); //str_replace should be mb safe.
 				$this->initDoc();
 				$this->doc->loadXML($value);
-				$this->initXPath();
+				$this->initXpath();
 			} else {
 				$this->doc = null;
 			}
@@ -608,13 +612,13 @@ class Document {
 	}
 
 	/**
-	 * 'con_object'
+	 * 'conObject'
 	 */
-	private function con_object($value) {
+	private function conObject($value) {
 		if ($value instanceof Document) {
-			$this->con_class($value);
+			$this->conClass($value);
 		} elseif (is_subclass_of($value, 'DOMNode')) {
-			$this->con_node($value);
+			$this->conNode($value);
 		} else {
 			$this->doMsg("NView: object constructor only uses instances of NView or subclasses of DOMNode.");
 		}
@@ -646,11 +650,6 @@ class Document {
 	 * parser message handler..
 	 */
 	function doMsg($errno, $errstr = '', $errfile = '', $errline = 0) {
-		//if(!is_null($this->log)){
-		//	$this->log->pushName("NView");
-		//	$this->log->error("$errno $errstr $errfile $errline");
-		//	$this->log->popName();
-		//}
 		$this->errs .= $errstr; //error was made.
 	}
 }

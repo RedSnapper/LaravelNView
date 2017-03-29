@@ -58,7 +58,8 @@ class NViewMakeCommand extends Command {
 		return __DIR__ . '/stubs/view.stub';
 	}
 
-	public function fire() {
+
+	public function fire() : bool {
 
 		$name = $this->getNameInput();
 
@@ -80,7 +81,7 @@ class NViewMakeCommand extends Command {
 		if($this->option('controller')){
 			$this->generateViewController($name);
 		}
-
+		return true;
 	}
 
 	protected function getViewPath(string $name) {

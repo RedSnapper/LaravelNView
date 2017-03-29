@@ -139,18 +139,12 @@ class View implements ViewContract {
 	}
 
 	protected function initialiseDocument($name){
-
-
-		if(is_string($name) && $this->factory->hasDocument($name)){
-//			print("$name<br />");
+		if(is_string($name)) {
+			if(!$this->factory->hasDocument($name)) {
+				$this->factory->addDocument($name,new Document($name));
+			}
 			return $this->factory->getDocument($name);
 		}
-
-		if(is_string($name)){
-//			print("$name<br />");
-			$this->factory->addDocument($name,new Document($name));
-		}
-
 		return new Document($name);
 	}
 
@@ -531,7 +525,7 @@ class View implements ViewContract {
 	 * @param             $attribute
 	 * @return void
 	 */
-	protected function compileURL(\DOMElement $node, $attribute) {
+	protected function compileUrl(\DOMElement $node, $attribute) {
 
 		$url = preg_replace_callback('/{([\d\w\.]+)}/', function ($matches) {
 			return $this->getValue($matches[1], $this->data);
@@ -631,7 +625,7 @@ class View implements ViewContract {
 		//$this->nodeRemoved = true;
 	}
 
-	private function deleteDescendants(\DomNode $node) {
+	private function deleteDescendants(\DOMNode $node) {
 		while($node->firstChild) {
 			$this->deleteDescendants($node->firstChild);
 			$node->removeChild($node->firstChild);
