@@ -560,7 +560,7 @@ class View implements ViewContract {
 
 		$paginator = $this->getValue($this->getNodeAttribute($node, 'name'), $this->data);
 
-		if ($paginator->hasPages()) {
+		if ($paginator && $paginator->hasPages()) {
 			$include = $this->factory->make($attribute, $this->data, compact('paginator'));
 			$this->document->set('.', $include->compile(), $node);
 		}
