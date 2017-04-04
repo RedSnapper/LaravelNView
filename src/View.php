@@ -591,8 +591,8 @@ class View implements ViewContract {
 
 		$template = $this->document->consume("./*[1]", $node);
 
-		foreach ($array as $value) {
-			$item = $this->factory->make($template, array_merge($this->data, [$name => $value]));
+		foreach ($array as $key => $value) {
+			$item = $this->factory->make($template, array_merge($this->data, ["#key" => $key,$name => $value]));
 			$this->document->set("./child-gap()", $item, $node);
 		}
 	}
