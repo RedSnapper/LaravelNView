@@ -13,13 +13,6 @@ use Illuminate\Support\MessageBag;
 class View implements ViewContract {
 
 	/**
-	 * Context passed in data for contianers
-	 *
-	 * @var string
-	 */
-	const CONTEXT = "1605d216-87d3-4e1f-8fb9-9cf519e1ebc8";
-
-	/**
 	 * Identifier for container to render the whole container
 	 * in contents
 	 *
@@ -104,8 +97,9 @@ class View implements ViewContract {
 	 * @var array
 	 */
 	protected $compilers = [
+	  'attr'       => 'Attribute',
 	  'container'  => 'Container',
-	  'errors'		 => 'Errors',
+	  'errors'     => 'Errors',
 	  'auth'       => 'Auth',
 	  'can'        => 'Can',
 	  'cannot'     => 'Cannot',
@@ -138,10 +132,10 @@ class View implements ViewContract {
 		$this->loadViewController($this->viewName);
 	}
 
-	protected function initialiseDocument($name){
-		if(is_string($name)) {
-			if(!$this->factory->hasDocument($name)) {
-				$this->factory->addDocument($name,new Document($name));
+	protected function initialiseDocument($name) {
+		if (is_string($name)) {
+			if (!$this->factory->hasDocument($name)) {
+				$this->factory->addDocument($name, new Document($name));
 			}
 			return $this->factory->getDocument($name);
 		}
@@ -334,7 +328,6 @@ class View implements ViewContract {
 				$this->removeAttributesFromNode($node);
 			}
 		}
-
 	}
 
 	/**
@@ -351,9 +344,7 @@ class View implements ViewContract {
 
 				$compiler = "compile{$this->compilers[$token]}";
 
-				$value = $this->getNodeAttribute($node, $token);
-
-				$carry[] = [$compiler, $node, $value];
+				$carry[] = [$compiler, $node, $attr];
 			}
 
 			return $carry;
@@ -375,7 +366,7 @@ class View implements ViewContract {
 			return false;
 		}
 
-		$token = substr($name, mb_strlen($this->prefix));
+		$token = $this->getArrayFromAttribute($name)[0];
 
 		if ($this->isCompiler($token)) {
 			return $token;
@@ -401,14 +392,15 @@ class View implements ViewContract {
 	 * @param             $attribute
 	 * @return void
 	 */
-	protected function compileTranslations(\DOMElement $node, $attribute) {
+	protected function compileTranslations(\DOMElement $node, \DOMAttr $attr) {
 
 		$translator = $this->container->make('translator');
 
-		$translation = $translator->trans($attribute);
+		$translation = $translator->trans($attr->nodeValue);
 
 		$this->document->set('.', $translation, $node);
 	}
+
 	/**
 	 * Compiles errors
 	 *
@@ -416,9 +408,9 @@ class View implements ViewContract {
 	 * @param             $attribute
 	 * @return void
 	 */
-	protected function compileErrors(\DOMElement $node, $attribute) {
-		if(count($this->data['errors']) > 0) {
-			$errorView = $this->factory->make($attribute, $this->data);
+	protected function compileErrors(\DOMElement $node, \DOMAttr $attr) {
+		if (count($this->data['errors']) > 0) {
+			$errorView = $this->factory->make($attr->nodeValue, $this->data);
 			$this->document->set('.', $errorView->compile(), $node);
 		} else {
 			$this->document->set('.', null, $node);
@@ -432,9 +424,9 @@ class View implements ViewContract {
 	 * @param             $attribute
 	 * @return void
 	 */
-	protected function compileChildGap(\DOMElement $node, $attribute) {
+	protected function compileChildGap(\DOMElement $node, \DOMAttr $attr) {
 
-		$value = $this->getValue($attribute, $this->data);
+		$value = $this->getValue($attr->nodeValue, $this->data);
 
 		$this->document->set('./child-gap()', $value, $node);
 	}
@@ -443,12 +435,12 @@ class View implements ViewContract {
 	 * Replaces the node with data found
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compileReplace(\DOMElement $node, $attribute) {
+	protected function compileReplace(\DOMElement $node, \DOMAttr $attr) {
 
-		$value = $this->getValue($attribute, $this->data);
+		$value = $this->getValue($attr->nodeValue, $this->data);
 
 		$this->document->set('.', $value, $node);
 	}
@@ -457,14 +449,14 @@ class View implements ViewContract {
 	 * Security using gates
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compileCan(\DOMElement $node, $attribute) {
+	protected function compileCan(\DOMElement $node, \DOMAttr $attr) {
 
 		$gate = $this->container->make('Gate');
 
-		if ($gate::denies($attribute)) {
+		if ($gate::denies($attr->nodeValue)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		};
@@ -474,14 +466,14 @@ class View implements ViewContract {
 	 * Security using gates
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compileCannot(\DOMElement $node, $attribute) {
+	protected function compileCannot(\DOMElement $node, \DOMAttr $attr) {
 
 		$gate = $this->container->make('Gate');
 
-		if ($gate::allows($attribute)) {
+		if ($gate::allows($attr->nodeValue)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		};
@@ -491,14 +483,14 @@ class View implements ViewContract {
 	 * Is the user logged in
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compileAuth(\DOMElement $node, $attribute) {
+	protected function compileAuth(\DOMElement $node, \DOMAttr $attr) {
 
 		$auth = $this->container->make('Auth');
 
-		if ($auth::check() != filter_var($attribute, FILTER_VALIDATE_BOOLEAN)) {
+		if ($auth::check() != filter_var($attr->nodeValue, FILTER_VALIDATE_BOOLEAN)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		}
@@ -508,12 +500,12 @@ class View implements ViewContract {
 	 * Includes
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compileInclude(\DOMElement $node, $attribute) {
+	protected function compileInclude(\DOMElement $node, \DOMAttr $attr) {
 
-		$include = $this->factory->make($attribute, $this->data);
+		$include = $this->factory->make($attr->nodeValue, $this->data);
 		$this->document->set('.', $include->compile(), $node);
 		$this->deleteDescendants($node);
 	}
@@ -522,14 +514,14 @@ class View implements ViewContract {
 	 * URL
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compileUrl(\DOMElement $node, $attribute) {
+	protected function compileUrl(\DOMElement $node, \DOMAttr $attr) {
 
 		$url = preg_replace_callback('/{([\d\w\.]+)}/', function ($matches) {
 			return $this->getValue($matches[1], $this->data);
-		}, $attribute);
+		}, $attr->nodeValue);
 		$this->document->set('./@href', $url, $node);
 	}
 
@@ -537,47 +529,68 @@ class View implements ViewContract {
 	 * Asset
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compileAsset(\DOMElement $node, $attribute) {
+	protected function compileAsset(\DOMElement $node, \DOMAttr $attr) {
 
 		$url = $this->container->make('url');
 
 		$property = $node->tagName == "link" ? "href" : "src";
 
-		$this->document->set("./@{$property}", $url->asset($attribute), $node);
+		$this->document->set("./@{$property}", $url->asset($attr->nodeValue), $node);
 	}
 
 	/**
 	 * Pagination
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compilePagination(\DOMElement $node, $attribute) {
+	protected function compilePagination(\DOMElement $node, \DOMAttr $attr) {
 
 		$paginator = $this->getValue($this->getNodeAttribute($node, 'name'), $this->data);
 
 		if ($paginator && $paginator->hasPages()) {
-			$include = $this->factory->make($attribute, $this->data, compact('paginator'));
+			$include = $this->factory->make($attr->nodeValue, $this->data, compact('paginator'));
 			$this->document->set('.', $include->compile(), $node);
 		}
+	}
+
+	/**
+	 * Compiles Attribute
+	 *
+	 * @param \DOMElement $node
+	 * @param \DOMAttr    $attr
+	 * @return void
+	 */
+	protected function compileAttribute(\DOMElement $node, \DOMAttr $attr) {
+
+		$name = $this->getArrayFromAttribute($attr->nodeName)[1];
+
+		$value = preg_replace_callback('/{([\d\w\.]+)}/', function ($matches) {
+			return $this->getValue($matches[1], $this->data);
+		}, $attr->nodeValue);
+
+		$this->document->set("./@{$name}", $value, $node);
+
 	}
 
 	/**
 	 * Compiles Foreach
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compileForEach(\DOMElement $node, $attribute) {
+	protected function compileForEach(\DOMElement $node, \DOMAttr $attr) {
 
-		$array = $this->getValue($attribute, $this->data);
+		$array = $this->getValue($attr->nodeValue, $this->data);
 		count($array) ? $this->renderForEach($array, $node) : $this->removeNode($node);
 	}
+
+
 
 	/**
 	 * Render using an array
@@ -592,7 +605,7 @@ class View implements ViewContract {
 		$template = $this->document->consume("./*[1]", $node);
 
 		foreach ($array as $key => $value) {
-			$item = $this->factory->make($template, array_merge($this->data, ["#key" => $key,$name => $value]));
+			$item = $this->factory->make($template, array_merge($this->data, ["#key" => $key, $name => $value]));
 			$this->document->set("./child-gap()", $item, $node);
 		}
 	}
@@ -601,13 +614,13 @@ class View implements ViewContract {
 	 * Container
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
-	protected function compileContainer(\DOMElement $node, $attribute) {
+	protected function compileContainer(\DOMElement $node, \DOMAttr $attr) {
 
 		// Load up our container
-		$container = $this->factory->make($attribute, $this->data);
+		$container = $this->factory->make($attr->nodeValue, $this->data);
 
 		//Remove container attribute
 		$this->removeAttributeFromNode('container', $node);
@@ -626,7 +639,7 @@ class View implements ViewContract {
 	}
 
 	private function deleteDescendants(\DOMNode $node) {
-		while($node->firstChild) {
+		while ($node->firstChild) {
 			$this->deleteDescendants($node->firstChild);
 			$node->removeChild($node->firstChild);
 		}
@@ -827,6 +840,16 @@ class View implements ViewContract {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * @param $name
+	 * @return array
+	 */
+	private function getArrayFromAttribute($name):array {
+
+		$token = substr($name, mb_strlen($this->prefix));
+		return explode('.', $token);
 	}
 
 }
