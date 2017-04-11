@@ -389,7 +389,7 @@ class View implements ViewContract {
 	 * Compiles translations
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
 	protected function compileTranslations(\DOMElement $node, \DOMAttr $attr) {
@@ -405,7 +405,7 @@ class View implements ViewContract {
 	 * Compiles errors
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
 	protected function compileErrors(\DOMElement $node, \DOMAttr $attr) {
@@ -421,7 +421,7 @@ class View implements ViewContract {
 	 * Compiles child-gap
 	 *
 	 * @param \DOMElement $node
-	 * @param             $attribute
+	 * @param \DOMAttr    $attr
 	 * @return void
 	 */
 	protected function compileChildGap(\DOMElement $node, \DOMAttr $attr) {
@@ -456,7 +456,9 @@ class View implements ViewContract {
 
 		$gate = $this->container->make('Gate');
 
-		if ($gate::denies($attr->nodeValue)) {
+		$value = $this->getCompilerParameter($node);
+
+		if ($gate::denies($attr->nodeValue,$value)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		};
@@ -473,7 +475,9 @@ class View implements ViewContract {
 
 		$gate = $this->container->make('Gate');
 
-		if ($gate::allows($attr->nodeValue)) {
+		$value = $this->getCompilerParameter($node);
+
+		if ($gate::allows($attr->nodeValue,$value)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		};
@@ -850,6 +854,16 @@ class View implements ViewContract {
 
 		$token = substr($name, mb_strlen($this->prefix));
 		return explode('.', $token);
+	}
+
+	/**
+	 * @param \DOMElement $node
+	 * @return mixed|null|string
+	 */
+	private function getCompilerParameter(\DOMElement $node) {
+		$param = @$this->getNodeAttribute($node, 'param');
+		$value = $param ? $this->getValue($param, $this->data) : null;
+		return $value;
 	}
 
 }
