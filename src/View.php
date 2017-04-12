@@ -8,6 +8,8 @@ use Illuminate\Contracts\Support\Arrayable;
 use \Illuminate\Contracts\Container\Container;
 
 use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\MessageBag;
 
 class View implements ViewContract {
@@ -107,6 +109,7 @@ class View implements ViewContract {
 	  'pagination' => 'Pagination',
 	  'foreach'    => 'ForEach',
 	  'url'        => 'URL',
+	  'route'      => 'Route',
 	  'asset'      => 'Asset',
 	  'child'      => 'ChildGap',
 	  'replace'    => 'Replace',
@@ -458,7 +461,7 @@ class View implements ViewContract {
 
 		$value = $this->getCompilerParameter($node);
 
-		if ($gate::denies($attr->nodeValue,$value)) {
+		if ($gate::denies($attr->nodeValue, $value)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		};
@@ -477,7 +480,7 @@ class View implements ViewContract {
 
 		$value = $this->getCompilerParameter($node);
 
-		if ($gate::allows($attr->nodeValue,$value)) {
+		if ($gate::allows($attr->nodeValue, $value)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		};
@@ -530,6 +533,18 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * URL
+	 *
+	 * @param \DOMElement $node
+	 * @param \DOMAttr    $attr
+	 * @return void
+	 */
+	protected function compileRoute(\DOMElement $node, \DOMAttr $attr) {
+		$url = URL::route($attr->nodeValue);
+		$this->document->set('./@href', $url, $node);
+	}
+
+	/**
 	 * Asset
 	 *
 	 * @param \DOMElement $node
@@ -578,7 +593,6 @@ class View implements ViewContract {
 		}, $attr->nodeValue);
 
 		$this->document->set("./@{$name}", $value, $node);
-
 	}
 
 	/**
@@ -593,8 +607,6 @@ class View implements ViewContract {
 		$array = $this->getValue($attr->nodeValue, $this->data);
 		count($array) ? $this->renderForEach($array, $node) : $this->removeNode($node);
 	}
-
-
 
 	/**
 	 * Render using an array
@@ -850,7 +862,7 @@ class View implements ViewContract {
 	 * @param $name
 	 * @return array
 	 */
-	private function getArrayFromAttribute($name):array {
+	private function getArrayFromAttribute($name): array {
 
 		$token = substr($name, mb_strlen($this->prefix));
 		return explode('.', $token);
