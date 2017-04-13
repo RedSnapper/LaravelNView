@@ -7,23 +7,18 @@ use Exception;
 mb_internal_encoding('UTF-8');
 
 class Document {
-
 	const GAP_NONE = 1;
 	const GAP_FOLLOWING = 2;
 	const GAP_PRECEDING = 3;
 	const GAP_CHILD = 4;
-	const GAP_NATTR = 5;
-	const GAP_DATA = 6;
-
+	const GAP_DATA = 5;
 	private $errs = '';
 	private $fname = null;
-
 	/**
 	 * @var \DOMXPath
 	 */
 	private $xp = null;
 	private $doc = null;
-
 	/**
 	 * '__clone'
 	 */
@@ -231,7 +226,7 @@ class Document {
 									if (substr($attr->nodeName, 0, 6) == "xmlns:") {
 										$myde->removeAttribute($attr->nodeName);
 										$natr = $retval->importNode($attr, true); //can return false.
-										if($natr) {
+										if ($natr) {
 											$myde->setAttributeNode($natr);
 										}
 									}
@@ -314,22 +309,26 @@ class Document {
 				case "double":
 				case "object" : { //probably a node.
 					if (gettype($value) != "object" || is_subclass_of($value, \DOMNode::class) || $value instanceof \DOMNodeList
-					  || $value instanceof Document || $value instanceof View
+						|| $value instanceof Document || $value instanceof View
 					) {
-
-						$spoint = mb_strrpos($xpath, '/');
-						$apoint = mb_strrpos($xpath, '@');
-						if ($apoint == $spoint + 1) {
-							$aname = mb_substr($xpath, $apoint + 1); //grab the attribute name.
-							$xpath = mb_substr($xpath, 0, $spoint); //resize the xpath.
-							$gap = self::GAP_NATTR;
+						$aName = null;
+						$atPoint = mb_strrpos($xpath, "/@");
+						if ($atPoint !== false) {
+							$aName = mb_substr($xpath, $atPoint + 2); //grab the attribute name.
+							if ($this->validName($aName)) {
+								$xpath = mb_substr($xpath,0,$atPoint);
+							}
 						}
-						$entries = $this->xp->query($xpath, $ref);
+						if (!is_null($ref) && $xpath == ".") { //not worth evaluating an xpath for this.
+							$entries = [$ref]; //it's hard to create a DOMNodeList
+						} else {
+							$entries = $this->xp->query($xpath, $ref);
+						}
 
 						if ($entries) {
-							if ($entries->length !== 0) {
+							if (is_array($entries) || $entries->length !== 0) {
 
-								if($value instanceof View){
+								if ($value instanceof View) {
 									$value = $value->compile();
 								}
 
@@ -340,109 +339,139 @@ class Document {
 										$value = $value->show(false);
 									}
 								}
-								if($value instanceof \DOMDocument) {
+								if ($value instanceof \DOMDocument) {
 									$value = $value->documentElement;
 								}
+								if (isset($aName) && (gettype($value) != "object")) { //prepare attribute.
+									$value = $this->xmlenc(strval($value));
+								}
+								//Now we have the value set.
 								foreach ($entries as $entry) {
-									if ($gap == self::GAP_NATTR && $entry->nodeType == XML_ELEMENT_NODE && isset($aname)) {
-										$entry->setAttribute($aname, strval($value));
-									} else {
-										if (($entry->nodeType == XML_ATTRIBUTE_NODE) && (gettype($value) != "object")) {
-											switch ($gap) {
-												case self::GAP_NONE: {
-													$entry->value = $this->xmlenc(strval($value));
-												}
-												break;
-												case self::GAP_PRECEDING: {
-													$entry->value = $this->xmlenc(strval($value)) . $entry->value;
-												}
-												break;
-												case self::GAP_FOLLOWING:
-												case self::GAP_CHILD: {
-													$entry->value .= $this->xmlenc(strval($value));
-												}
-												break;
+									if (($entry->nodeType == XML_ATTRIBUTE_NODE) && (gettype($value) != "object")) {
+										switch ($gap) {
+											case self::GAP_DATA:
+											case self::GAP_NONE: {
+												$entry->value = $this->xmlenc(strval($value));
 											}
-										} elseif (($entry->nodeType == XML_CDATA_SECTION_NODE) && (gettype($value) != "object")) {
-											switch ($gap) {
-												case self::GAP_NONE: {
-													$entry->data = strval($value);
-												}
-												break;
-												case self::GAP_PRECEDING: {
-													$entry->insertData(0, strval($value));
-												}
-												break;
-												case self::GAP_FOLLOWING:
-												case self::GAP_CHILD: {
-													$entry->appendData(strval($value));
-												}
-												break;
+											break;
+											case self::GAP_PRECEDING: {
+												$entry->value = $this->xmlenc(strval($value)) . $entry->value;
 											}
-										} elseif (($entry->nodeType == XML_COMMENT_NODE) && ($gap == self::GAP_DATA)) {
-											if (gettype($value) == "object") {
-												$fvalue = "";
-												if ($value instanceof \DOMNodeList) {
-													foreach ($value as $nodi) {
-														$doc = new \DOMDocument("1.0", "utf-8");
-														$node = $doc->importNode($nodi, true);
-														$doc->appendChild($node);
-														$txt = $doc->saveXML();
-														$fvalue .= static::asFragment($txt);
-													}
-												} else {
-													if ($value instanceof \DOMNode) {
-														$doc = new \DOMDocument("1.0", "utf-8");
-														$node = $doc->importNode($value, true);
-														$doc->appendChild($node);
-														$txt = $doc->saveXML();
-														$fvalue = static::asFragment($txt);
-													} else {
-														$this->doMsg("NView:  " . gettype($value) . " not yet implemented for comment insertion.");
-													}
-												}
-												$fvalue = str_replace(array("<!--", "-->"), "", $value);
-												$entry->replaceData(0, $entry->length, $fvalue);
-											} else {
-												$fvalue = str_replace(array("<!--", "-->"), "", $value);
-												$entry->replaceData(0, $entry->length, $fvalue);
+											break;
+											case self::GAP_FOLLOWING:
+											case self::GAP_CHILD: {
+												$entry->value .= $this->xmlenc(strval($value));
 											}
-										} else {
+											break;
+										}
+									} elseif (($entry->nodeType == XML_CDATA_SECTION_NODE) && (gettype($value) != "object")) {
+										switch ($gap) {
+											case self::GAP_NONE: {
+												$entry->data = strval($value);
+											}
+											break;
+											case self::GAP_PRECEDING: {
+												$entry->insertData(0, strval($value));
+											}
+											break;
+											case self::GAP_FOLLOWING:
+											case self::GAP_CHILD: {
+												$entry->appendData(strval($value));
+											}
+											break;
+										}
+									} elseif (($entry->nodeType == XML_COMMENT_NODE) && ($gap == self::GAP_DATA)) {
+										if (gettype($value) == "object") {
+											$fvalue = "";
 											if ($value instanceof \DOMNodeList) {
 												foreach ($value as $nodi) {
-													$nodc = $nodi->cloneNode(true);
-													$node = $this->doc->importNode($nodc, true);
+													$doc = new \DOMDocument("1.0", "utf-8");
+													$node = $doc->importNode($nodi, true);
+													$doc->appendChild($node);
+													$txt = $doc->saveXML();
+													$fvalue .= static::asFragment($txt);
+												}
+											} else {
+												if ($value instanceof \DOMNode) {
+													$doc = new \DOMDocument("1.0", "utf-8");
+													$node = $doc->importNode($value, true);
+													$doc->appendChild($node);
+													$txt = $doc->saveXML();
+													$fvalue = static::asFragment($txt);
+												} else {
+													$this->doMsg("NView:  " . gettype($value) . " not yet implemented for comment insertion.");
+												}
+											}
+											$fvalue = str_replace(array("<!--", "-->"), "", $value);
+											$entry->replaceData(0, $entry->length, $fvalue);
+										} else {
+											$fvalue = str_replace(array("<!--", "-->"), "", $value);
+											$entry->replaceData(0, $entry->length, $fvalue);
+										}
+									} else {
+										if ($value instanceof \DOMNodeList) {
+											foreach ($value as $nodi) {
+												$nodc = $nodi->cloneNode(true);
+												$node = $this->doc->importNode($nodc, true);
+												switch ($gap) {
+													case self::GAP_DATA:
+													case self::GAP_NONE: {
+														$entry->parentNode->replaceChild($node, $entry);
+													}
+													break;
+													case self::GAP_PRECEDING: {
+														$entry->parentNode->insertBefore($node, $entry);
+													}
+													break;
+													case self::GAP_FOLLOWING: {
+														if (is_null($entry->nextSibling)) {
+															$entry->parentNode->appendChild($node);
+														} else {
+															$entry->parentNode->insertBefore($node, $entry->nextSibling);
+														}
+													}
+													break;
+													case self::GAP_CHILD: {
+														$entry->appendChild($node);
+													}
+													break;
+												}
+											}
+										} else {
+											if (gettype($value) != "object") {
+												$node = $this->strToNode(strval($value));
+											} else {
+												$nodc = $value->cloneNode(true);
+												$node = $this->doc->importNode($nodc, true);
+											}
+											if (isset($aName)) {
+												if ($entry->nodeType == XML_ELEMENT_NODE) {
 													switch ($gap) {
+														case self::GAP_DATA:
 														case self::GAP_NONE: {
-															$entry->parentNode->replaceChild($node, $entry);
-														}
-														break;
-														case self::GAP_PRECEDING: {
-															$entry->parentNode->insertBefore($node, $entry);
-														}
-														break;
-														case self::GAP_FOLLOWING: {
-															if (is_null($entry->nextSibling)) {
-																$entry->parentNode->appendChild($node);
+															if(!empty($value)) {
+																$entry->setAttribute($aName,$value);
 															} else {
-																$entry->parentNode->insertBefore($node, $entry->nextSibling);
+																$entry->removeAttribute($aName);
 															}
 														}
 														break;
-														case self::GAP_CHILD: {
-															$entry->appendChild($node);
+														case self::GAP_PRECEDING: {
+															$original = $entry->getAttribute($aName);
+															$entry->setAttribute($aName,$value . $original);
+														}
+														break;
+														case self::GAP_CHILD:
+														case self::GAP_FOLLOWING: {
+															$original = $entry->getAttribute($aName);
+															$entry->setAttribute($aName,$original . $value);
 														}
 														break;
 													}
 												}
 											} else {
-												if (gettype($value) != "object") {
-													$node = $this->strToNode(strval($value));
-												} else {
-													$nodc = $value->cloneNode(true);
-													$node = $this->doc->importNode($nodc, true);
-												}
 												switch ($gap) {
+													case self::GAP_DATA:
 													case self::GAP_NONE: {
 														$entry->parentNode->replaceChild($node, $entry);
 													}
@@ -520,7 +549,6 @@ class Document {
 			$this->initXpath();
 		}
 	}
-
 
 	/**
 	 * 'conNode'
@@ -630,6 +658,23 @@ class Document {
 				$entry->appendChild($this->doc->createTextNode(''));
 			}
 		}
+	}
+
+	/**
+	 * Test that a name is a legal xml name suitable for attributes and elements.
+	 * Colon has been removed.
+	 */
+	private function validName($name): bool {
+		$pattern = '~
+# XML 1.0 Name symbol PHP PCRE regex <http://www.w3.org/TR/REC-xml/#NT-Name>
+(?(DEFINE)
+    (?<NameStartChar> [A-Z_a-z\\xC0-\\xD6\\xD8-\\xF6\\xF8-\\x{2FF}\\x{370}-\\x{37D}\\x{37F}-\\x{1FFF}\\x{200C}-\\x{200D}\\x{2070}-\\x{218F}\\x{2C00}-\\x{2FEF}\\x{3001}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFFD}\\x{10000}-\\x{EFFFF}])
+    (?<NameChar>      (?&NameStartChar) | [.\\-0-9\\xB7\\x{0300}-\\x{036F}\\x{203F}-\\x{2040}])
+    (?<Name>          (?&NameStartChar) (?&NameChar)*)
+)
+^(?&Name)$
+~ux';
+		return (1 === preg_match($pattern, $name));
 	}
 
 	/**
