@@ -105,6 +105,7 @@ class View implements ViewContract {
 	  'auth'       => 'Auth',
 	  'can'        => 'Can',
 	  'cannot'     => 'Cannot',
+		'exists'		 => 'Exists',
 	  'include'    => 'Include',
 	  'pagination' => 'Pagination',
 	  'foreach'    => 'ForEach',
@@ -449,6 +450,23 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * handle existence in data.
+	 *
+	 * @param \DOMElement $node
+	 * @param \DOMAttr    $attr
+	 * @return void
+	 */
+	protected function compileExists(\DOMElement $node, \DOMAttr $attr) {
+
+		if (!$this->hasValue($attr->nodeValue, $this->data)) {
+			$this->document->set('.', null, $node);
+			$this->deleteDescendants($node);
+		}
+
+	}
+
+
+	/**
 	 * Security using gates
 	 *
 	 * @param \DOMElement $node
@@ -756,6 +774,17 @@ class View implements ViewContract {
 	 */
 	protected function getValue(string $attribute, array $data) {
 		return data_get($data, $attribute);
+	}
+
+	/**
+	 * Test value from the data based on dot notation
+	 *
+	 * @param string $attribute
+	 * @param array  $data
+	 * @return mixed|string
+	 */
+	protected function hasValue(string $attribute, array $data) {
+			return data_get($data, $attribute) !== null;
 	}
 
 	/**
