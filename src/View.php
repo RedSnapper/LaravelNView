@@ -5,7 +5,7 @@ namespace RS\NView;
 use Illuminate\Contracts\Support\MessageProvider;
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Contracts\Support\Arrayable;
-use \Illuminate\Contracts\Container\Container;
+use Illuminate\Contracts\Container\Container;
 
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Support\Facades\Route;
@@ -125,8 +125,7 @@ class View implements ViewContract {
 	 * @param  mixed  $document
 	 * @param  mixed  $data
 	 */
-	public function __construct(Factory $factory, $viewName, $document, $data = []) {
-
+	public function __construct(Factory $factory,$viewName, $document, $data = []) {
 		$this->factory = $factory;
 		$this->document = $this->initialiseDocument($document);
 		$this->container = $this->factory->getContainer();
@@ -431,7 +430,6 @@ class View implements ViewContract {
 	protected function compileChildGap(\DOMElement $node, \DOMAttr $attr) {
 
 		$value = $this->getValue($attr->nodeValue, $this->data);
-
 		$this->document->set('./child-gap()', $value, $node);
 	}
 
