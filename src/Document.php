@@ -449,7 +449,7 @@ class Document {
 													switch ($gap) {
 														case self::GAP_DATA:
 														case self::GAP_NONE: {
-															if(!empty($value)) {
+															if(!$this->isNullOrEmpty$value)) {
 																$entry->setAttribute($aName,$value);
 															} else {
 																$entry->removeAttribute($aName);
@@ -559,7 +559,7 @@ class Document {
 			$this->initXpath();
 		} elseif ($value->nodeType == XML_ELEMENT_NODE) {
 			$this->initDoc();
-			if (empty($value->prefix)) {
+			if ($this->isNullOrEmpty$value->prefix)) {
 				$value->setAttribute("xmlns", $value->namespaceURI);
 			} else {
 				$value->setAttribute("xmlns:" . $value->prefix, $value->namespaceURI);
@@ -608,7 +608,7 @@ class Document {
 	 */
 	private function conString($value) {
 
-		if (empty($value)) {
+		if ($this->isNullOrEmpty$value)) {
 			$this->conFile($value); //handle implicit in file..
 		} elseif (strpos($value, '<') === false) {
 			$this->conFile($value);
@@ -660,6 +660,11 @@ class Document {
 		}
 	}
 
+// Function for basic field validation (present and neither empty nor only white space
+	private function isNullOrEmpty($value){
+    	return (!isset($value) || trim($value)==='');
+	}
+	
 	/**
 	 * Test that a name is a legal xml name suitable for attributes and elements.
 	 * Colon has been removed.
