@@ -449,7 +449,7 @@ class Document {
 													switch ($gap) {
 														case self::GAP_DATA:
 														case self::GAP_NONE: {
-															if(!$this->isNullOrEmpty$value)) {
+															if(!$this->isNullOrEmpty($value)) {
 																$entry->setAttribute($aName,$value);
 															} else {
 																$entry->removeAttribute($aName);
@@ -559,7 +559,7 @@ class Document {
 			$this->initXpath();
 		} elseif ($value->nodeType == XML_ELEMENT_NODE) {
 			$this->initDoc();
-			if ($this->isNullOrEmpty$value->prefix)) {
+			if ($this->isNullOrEmpty($value->prefix)) {
 				$value->setAttribute("xmlns", $value->namespaceURI);
 			} else {
 				$value->setAttribute("xmlns:" . $value->prefix, $value->namespaceURI);
@@ -608,7 +608,7 @@ class Document {
 	 */
 	private function conString($value) {
 
-		if ($this->isNullOrEmpty$value)) {
+		if ($this->isNullOrEmpty($value)) {
 			$this->conFile($value); //handle implicit in file..
 		} elseif (strpos($value, '<') === false) {
 			$this->conFile($value);
