@@ -309,7 +309,8 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function runCompilers() {
-
+		$errs = error_reporting();
+		error_reporting(0);
 		$nodes = $this->getAllTokenNodes();
 
 		foreach ($nodes as $node) {
@@ -331,6 +332,7 @@ class View implements ViewContract {
 				$this->removeAttributesFromNode($node);
 			}
 		}
+		error_reporting($errs);
 	}
 
 	/**
@@ -474,10 +476,10 @@ class View implements ViewContract {
 	protected function compileCan(\DOMElement $node, \DOMAttr $attr) {
 
 		$gate = $this->container->make('Gate');
-
+		$activity = $this->attValue($attr); //because of a php debugging bug.
 		$value = $this->getCompilerParameter($node);
 
-		if ($gate::denies($attr->nodeValue, $value)) {
+		if ($gate::denies($activity,$value)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		};
@@ -493,10 +495,10 @@ class View implements ViewContract {
 	protected function compileCannot(\DOMElement $node, \DOMAttr $attr) {
 
 		$gate = $this->container->make('Gate');
-
+		$activity = $this->attValue($attr); //because of a php debugging bug.
 		$value = $this->getCompilerParameter($node);
 
-		if ($gate::allows($attr->nodeValue, $value)) {
+		if ($gate::allows($activity, $value)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		};
@@ -766,12 +768,17 @@ class View implements ViewContract {
 	/**
 	 * Get value from the data based on dot notation
 	 *
-	 * @param string $attribute
+	 * @param string $attribute semicolon delimited
 	 * @param array  $data
-	 * @return mixed|string
+	 * @return mixed
 	 */
 	protected function getValue(string $attribute, array $data) {
-		return data_get($data, $attribute);
+		$parameters = explode(';',$attribute);
+		$result = [];
+		foreach($parameters as $parameter) {
+			$result[] = data_get($data, $parameter);
+		}
+		return count($result) == 1? $result[0] : $result;
 	}
 
 	/**
@@ -903,6 +910,10 @@ class View implements ViewContract {
 		$param = @$this->getNodeAttribute($node, 'param');
 		$value = $param ? $this->getValue($param, $this->data) : null;
 		return $value;
+	}
+
+	private function attValue(\DOMAttr $attr) : string {
+		return $attr->nodeValue;
 	}
 
 }
