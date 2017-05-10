@@ -6,6 +6,8 @@ use Exception;
 
 mb_internal_encoding('UTF-8');
 
+
+
 class Document {
 	const GAP_NONE = 1;
 	const GAP_FOLLOWING = 2;
@@ -316,7 +318,7 @@ class Document {
 						if ($atPoint !== false) {
 							$aName = mb_substr($xpath, $atPoint + 2); //grab the attribute name.
 							if ($this->validName($aName)) {
-								$xpath = mb_substr($xpath,0,$atPoint);
+								$xpath = mb_substr($xpath, 0, $atPoint);
 							}
 						}
 						if (!is_null($ref) && $xpath == ".") { //not worth evaluating an xpath for this.
@@ -449,8 +451,8 @@ class Document {
 													switch ($gap) {
 														case self::GAP_DATA:
 														case self::GAP_NONE: {
-															if(!$this->isNullOrEmpty($value)) {
-																$entry->setAttribute($aName,$value);
+															if (!$this->isNullOrEmpty($value)) {
+																$entry->setAttribute($aName, $value);
 															} else {
 																$entry->removeAttribute($aName);
 															}
@@ -458,13 +460,13 @@ class Document {
 														break;
 														case self::GAP_PRECEDING: {
 															$original = $entry->getAttribute($aName);
-															$entry->setAttribute($aName,$value . $original);
+															$entry->setAttribute($aName, $value . $original);
 														}
 														break;
 														case self::GAP_CHILD:
 														case self::GAP_FOLLOWING: {
 															$original = $entry->getAttribute($aName);
-															$entry->setAttribute($aName,$original . $value);
+															$entry->setAttribute($aName, $original . $value);
 														}
 														break;
 													}
@@ -661,10 +663,10 @@ class Document {
 	}
 
 // Function for basic field validation (present and neither empty nor only white space
-	private function isNullOrEmpty($value){
-    	return (!isset($value) || trim($value)==='');
+	private function isNullOrEmpty($value) {
+		return (!isset($value) || trim($value) === '');
 	}
-	
+
 	/**
 	 * Test that a name is a legal xml name suitable for attributes and elements.
 	 * Colon has been removed.

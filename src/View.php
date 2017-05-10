@@ -529,8 +529,9 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function compileInclude(\DOMElement $node, \DOMAttr $attr) {
-
-		$include = $this->factory->make($attr->nodeValue, $this->data);
+		$params = $this->getCompilerParameter($node);
+		$data = $params ?? $this->data;
+		$include = $this->factory->make($attr->nodeValue, $data);
 		$this->document->set('.', $include->compile(), $node);
 		$this->deleteDescendants($node);
 	}
@@ -635,11 +636,12 @@ class View implements ViewContract {
 	protected function renderForEach($array, \DOMElement $node) {
 
 		$name = $this->getNodeAttribute($node, 'name');
+		$aKey = $this->getNodeAttribute($node, 'key') ?? "#key";
 
 		$template = $this->document->consume("./*[1]", $node);
 
 		foreach ($array as $key => $value) {
-			$item = $this->factory->make($template, array_merge($this->data, ["#key" => $key, $name => $value]));
+			$item = $this->factory->make($template, array_merge($this->data, [$aKey => $key, $name => $value]));
 			$this->document->set("./child-gap()", $item, $node);
 		}
 	}
@@ -766,13 +768,20 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * @return Factory
+	 */
+	public function getFactory() : Factory {
+		return $this->factory;
+	}
+
+	/**
 	 * Get value from the data based on dot notation
 	 *
 	 * @param string $attribute semicolon delimited
 	 * @param array  $data
 	 * @return mixed
 	 */
-	protected function getValue(string $attribute, array $data) {
+	public function getValue(string $attribute, array $data) {
 		$parameters = explode(';',$attribute);
 		$result = [];
 		foreach($parameters as $parameter) {
@@ -788,7 +797,7 @@ class View implements ViewContract {
 	 * @param array  $data
 	 * @return mixed|string
 	 */
-	protected function hasValue(string $attribute, array $data) {
+	public function hasValue(string $attribute, array $data) {
 			return data_get($data, $attribute) !== null;
 	}
 
