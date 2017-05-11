@@ -21,15 +21,6 @@ class Document {
 	 */
 	private $xp = null;
 	private $doc = null;
-	/**
-	 * '__clone'
-	 */
-	//public function __clone() {
-	//	return new Document($this);
-	//	//$this->initDoc();
-	//	//$this->doc = $this->doc->cloneNode(true);
-	//	//$this->initXpath();
-	//}
 
 	/**
 	 * NView constructor.
@@ -525,6 +516,12 @@ class Document {
 	}
 
 	/**
+	 * Find out if anything was put into this.
+	 */
+	public function errors() {
+		return $this->errs;
+	}
+	/**
 	 * 'initDoc'
 	 */
 	private function initDoc() {
@@ -687,8 +684,9 @@ class Document {
 	/**
 	 * 'doMsg'
 	 * parser message handler..
+	 * This needs to be public because we are calling render from outside of ourselves.
 	 */
-	function doMsg($errno, $errstr = '', $errfile = '', $errline = 0) {
-		$this->errs .= $errstr; //error was made.
+	public function doMsg($errno, $errstr = '', $errfile = '', $errline = 0) {
+		$this->errs .= "$errstr; "; //error was made.
 	}
 }
