@@ -286,8 +286,13 @@ class Document {
 								if ($entry instanceof \DOMAttr) {
 									$entry->parentNode->removeAttributeNode($entry);
 								} else {
-									$n = $entry->parentNode->removeChild($entry);
-									unset($n); //not sure if this is needed..
+									if(is_null($entry->parentNode)) {
+										$this->initDoc();
+										$entry = null;
+									} else {
+										$n = $entry->parentNode->removeChild($entry);
+										unset($n); //not sure if this is needed..
+									}
 								}
 							}
 						} else {

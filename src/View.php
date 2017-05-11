@@ -672,8 +672,8 @@ class View implements ViewContract {
 		//$this->nodeRemoved = true;
 	}
 
-	private function deleteDescendants(\DOMNode $node) {
-		while ($node->firstChild) {
+	private function deleteDescendants(\DOMNode $node = null) {
+		while (!is_null($node) && $node->firstChild) {
 			$this->deleteDescendants($node->firstChild);
 			$node->removeChild($node->firstChild);
 		}
