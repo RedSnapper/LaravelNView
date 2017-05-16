@@ -90,6 +90,14 @@ class View implements ViewContract {
 	 */
 	protected $containers = [];
 
+
+	/**
+	 * Accessor to the config for this.
+	 *
+	 * @var array
+	 */
+	protected $config = [];
+
 //	protected $nodeRemoved = false;
 
 	/**
@@ -129,6 +137,7 @@ class View implements ViewContract {
 		$this->factory = $factory;
 		$this->document = $this->initialiseDocument($document);
 		$this->container = $this->factory->getContainer();
+		$this->config = $this->container['config']['view'];
 		$this->viewName = $viewName;
 		$this->data = $data instanceof Arrayable ? $data->toArray() : (array)$data;
 
@@ -656,7 +665,7 @@ class View implements ViewContract {
 	 */
 	protected function compileContainer(\DOMElement $node, \DOMAttr $attr) {
 
-		// Load up our container
+		// Load up our container view
 		$container = $this->factory->make($this->attValue($attr), $this->data);
 
 		//Remove container attribute
@@ -840,7 +849,9 @@ class View implements ViewContract {
 	}
 
 	/**
-	 * Get controller class name based of view name
+	 * Get controller class name based of view name.
+	 * This now uses config settings to identify controller paths.
+	 * See the view config file 'controllers' section.
 	 *
 	 * @param string $name
 	 * @return string
@@ -852,8 +863,13 @@ class View implements ViewContract {
 		}
 		  , explode('.', $name)
 		);
-
-		return $this->container->getNamespace() . "View\\" . implode('\\', $parts);
+		$paths = $this->config['controllers'];
+		$signature = array_shift($parts);					//get $paths[0]
+		if(array_key_exists($signature,$paths)) { //do we know about it?
+			return $paths[$signature] .'\\'. implode('\\', $parts);
+		}
+		array_unshift($parts,$signature);
+		return $paths["__default"] .'\\'. implode('\\', $parts);
 	}
 
 	/**
