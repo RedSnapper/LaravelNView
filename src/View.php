@@ -557,7 +557,10 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function compileRoute(\DOMElement $node, \DOMAttr $attr) {
-		$url = URL::route($this->attValue($attr));
+		$params = $this->getCompilerParameter($node);
+		$route = $this->attValue($attr);
+		$url = URL::route($route,$params);
+
 		$this->document->set('./@href', $url, $node);
 	}
 
