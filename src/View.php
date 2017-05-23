@@ -785,18 +785,43 @@ class View implements ViewContract {
 	}
 
 	/**
-	 * Get value from the data based on dot notation
+	 * Get value(s) from the data based on dot notation.
+	 * This allows for a semi-colon delimited [name:]value array.
 	 *
 	 * @param string $attribute semicolon delimited
 	 * @param array  $data
 	 * @return mixed
 	 */
 	public function getValue(string $attribute, array $data) {
-		$parameters = explode(';',$attribute);
+		/**
+		 * initialise the response.
+		 */
 		$result = [];
+		/**
+		 * Get the array of parameters, which are semi-colon delimited.
+		 * eg data-v.param="foo;bar;bim"
+		 */
+		$parameters = explode(';',$attribute);
+		/**
+		 * for each parameter found (to be passed)...
+		 */
 		foreach($parameters as $parameter) {
-			$result[] = data_get($data, $parameter);
+			/**
+			 * find out if it has been explicitly named, by using a colon
+			 * eg data-v.param="foo;bar;bim:1121" the final parameter bim will hold the value 1121.
+			 */
+			$nameValue = explode(':',$parameter);
+			/**
+			 * named parameters are not mandatory, so we need to see if this parameter is named.
+			 * Normally they are not.
+			 */
+			if(count($nameValue) < 2) { //no name/value division.
+				$result[] = data_get($data, $parameter);
+			} else {
+				$result[ $nameValue[0] ] = data_get($data, $nameValue[1]);
+			}
 		}
+		//because we don't always want multi-values array, we may just want to respond with the first value.
 		return count($result) == 1? $result[0] : $result;
 	}
 
@@ -818,10 +843,10 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function loadViewController($viewName) {
-
-		// First check if we have a controller declared in our view
-		// Or try and load an associated controller by view name
-
+		/**
+		 * First check if we have a controller declared in our view
+		 * Or try and load an associated controller by view name
+		 */
 		if ($controller = $this->document->get("/*/@{$this->prefix}controller")) {
 			$this->loadViewControllerClass($controller);
 		} else {
