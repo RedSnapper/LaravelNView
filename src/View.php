@@ -97,6 +97,7 @@ class View implements ViewContract {
 		'can'        => 'Can',
 		'cannot'     => 'Cannot',
 		'exists'     => 'Exists',
+		'no'  			 => 'NotExists',
 		'include'    => 'Include',
 		'pagination' => 'Pagination',
 		'foreach'    => 'ForEach',
@@ -446,12 +447,26 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function compileExists(\DOMElement $node, \DOMAttr $attr) {
-
 		if (!$this->hasValue($this->attValue($attr), $this->data)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		}
 	}
+
+	/**
+	 * handle non-existence in data.
+	 *
+	 * @param \DOMElement $node
+	 * @param \DOMAttr    $attr
+	 * @return void
+	 */
+	protected function compileNotExists(\DOMElement $node, \DOMAttr $attr) {
+		if ($this->hasValue($this->attValue($attr), $this->data)) {
+			$this->document->set('.', null, $node);
+			$this->deleteDescendants($node);
+		}
+	}
+
 
 	/**
 	 * Security using gates

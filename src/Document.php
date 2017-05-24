@@ -66,13 +66,6 @@ class Document {
 		return $this->doc->documentElement;
 	}
 
-	/**
-	 * return the DOMDocument, or null.
-	 * 'domDoc'
-	 */
-	public function domDoc() {
-		return $this->doc;
-	}
 
 	/**
 	 * 'show'
