@@ -97,7 +97,9 @@ class View implements ViewContract {
 		'can'        => 'Can',
 		'cannot'     => 'Cannot',
 		'exists'     => 'Exists',
-		'no'  			 => 'NotExists',
+		'empty'			 => 'NotExists',
+		'match'			 => 'Match',
+		'nomatch'		 => 'NoMatch',
 		'include'    => 'Include',
 		'pagination' => 'Pagination',
 		'foreach'    => 'ForEach',
@@ -433,9 +435,7 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function compileReplace(\DOMElement $node, \DOMAttr $attr) {
-
 		$value = $this->getValue($this->attValue($attr), $this->data);
-
 		$this->document->set('.', $value, $node);
 	}
 
@@ -462,6 +462,40 @@ class View implements ViewContract {
 	 */
 	protected function compileNotExists(\DOMElement $node, \DOMAttr $attr) {
 		if ($this->hasValue($this->attValue($attr), $this->data)) {
+			$this->document->set('.', null, $node);
+			$this->deleteDescendants($node);
+		}
+	}
+
+	private function matching(\DOMElement $node, \DOMAttr $attr) : bool {
+		$valueToMatch = $this->getCompilerParameter($node);
+		$source = $this->attValue($attr);
+		$sourceValue = $this->getValue($source, $this->data);
+		return ($valueToMatch == $sourceValue);
+	}
+
+	/**
+	 * match a value.
+	 *
+	 * @param \DOMElement $node
+	 * @param \DOMAttr    $attr
+	 * @return void
+	 */
+	protected function compileMatch(\DOMElement $node, \DOMAttr $attr) {
+		if(!$this->matching($node,$attr)) {
+			$this->document->set('.', null, $node);
+			$this->deleteDescendants($node);
+		}
+	}
+	/**
+	 * don't match a value.
+	 *
+	 * @param \DOMElement $node
+	 * @param \DOMAttr    $attr
+	 * @return void
+	 */
+	protected function compileNoMatch(\DOMElement $node, \DOMAttr $attr) {
+		if( $this->matching($node,$attr)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		}
@@ -532,7 +566,7 @@ class View implements ViewContract {
 	 */
 	protected function compileInclude(\DOMElement $node, \DOMAttr $attr) {
 			$params = $this->getCompilerParameter($node);
-			$data = $params ?? $this->data;
+			$data = $params == "" ? $this->data : $params;
 			$include = $this->factory->make($this->attValue($attr), $data);
 			$this->document->set('.', $include->compile(), $node);
 			$this->deleteDescendants($node);
@@ -954,7 +988,11 @@ class View implements ViewContract {
 	 */
 	private function getCompilerParameter(\DOMElement $node) {
 		$param = @$this->getNodeAttribute($node, 'param');
-		$value = $param ? $this->getValue($param, $this->data) : null;
+		if($param=="") {
+			$value = @$this->getNodeAttribute($node, 'literal');
+		} else {
+			$value = $this->getValue($param, $this->data);
+		}
 		return $value;
 	}
 
