@@ -2,18 +2,15 @@
 
 namespace RS\NView;
 
-use Illuminate\Contracts\Support\MessageProvider;
-use Illuminate\Contracts\View\View as ViewContract;
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Container\Container;
-
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Support\MessageProvider;
 use Illuminate\Contracts\Support\Renderable;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\MessageBag;
 
 class View implements ViewContract {
-
 	/**
 	 * Identifier for container to render the whole container
 	 * in contents
@@ -21,85 +18,71 @@ class View implements ViewContract {
 	 * @var string
 	 */
 	const DEFAULT_SECTION = "#document";
-
 	/**
 	 * Child content
 	 *
 	 * @var null|Document
 	 */
 	protected $child;
-
 	/**
 	 * The factory
 	 *
 	 * @var Factory
 	 */
 	protected $factory;
-
 	/**
 	 * The container
 	 *
 	 * @var Container
 	 */
 	private $container;
-
 	/**
 	 * The Document.
 	 *
 	 * @var Document
 	 */
 	public $document;
-
 	/**
 	 * The name of the view.
 	 *
 	 * @var string
 	 */
 	protected $viewName;
-
 	/**
 	 * The array of view data.
 	 *
 	 * @var array
 	 */
 	protected $data;
-
 	/**
 	 * The prefix for all xPaths.
 	 *
 	 * @var string
 	 */
 	protected $prefix = "data-v.";
-
 	/**
 	 * @var null|ViewController
 	 */
 	protected $controller;
-
 	/**
 	 * Has the view been compiled
 	 *
 	 * @var bool
 	 */
 	protected $compiled = false;
-
 	/**
 	 * Containers for the view
 	 *
 	 * @var array
 	 */
 	protected $containers = [];
-
-
 	/**
 	 * Accessor to the config for this.
 	 *
 	 * @var array
 	 */
 	protected $config = [];
-
 //	protected $nodeRemoved = false;
-
 	/**
 	 * An array of tokens and associatedCompilers
 	 * Compilers will be run in this order
@@ -107,22 +90,22 @@ class View implements ViewContract {
 	 * @var array
 	 */
 	protected $compilers = [
-	  'attr'       => 'Attribute',
-	  'container'  => 'Container',
-	  'errors'     => 'Errors',
-	  'auth'       => 'Auth',
-	  'can'        => 'Can',
-	  'cannot'     => 'Cannot',
-		'exists'		 => 'Exists',
-	  'include'    => 'Include',
-	  'pagination' => 'Pagination',
-	  'foreach'    => 'ForEach',
-	  'url'        => 'URL',
-	  'route'      => 'Route',
-	  'asset'      => 'Asset',
-	  'child'      => 'ChildGap',
-	  'replace'    => 'Replace',
-	  'tr'         => 'Translations'
+		'attr'       => 'Attribute',
+		'container'  => 'Container',
+		'errors'     => 'Errors',
+		'auth'       => 'Auth',
+		'can'        => 'Can',
+		'cannot'     => 'Cannot',
+		'exists'     => 'Exists',
+		'include'    => 'Include',
+		'pagination' => 'Pagination',
+		'foreach'    => 'ForEach',
+		'url'        => 'URL',
+		'route'      => 'Route',
+		'asset'      => 'Asset',
+		'child'      => 'ChildGap',
+		'replace'    => 'Replace',
+		'tr'         => 'Translations'
 	];
 
 	/**
@@ -133,7 +116,7 @@ class View implements ViewContract {
 	 * @param  mixed  $document
 	 * @param  mixed  $data
 	 */
-	public function __construct(Factory $factory,$viewName, $document, $data = []) {
+	public function __construct(Factory $factory, $viewName, $document, $data = []) {
 		$this->factory = $factory;
 		$this->document = $this->initialiseDocument($document);
 		$this->container = $this->factory->getContainer();
@@ -191,7 +174,6 @@ class View implements ViewContract {
 		$this->runCompilers();
 
 		return $this->document;
-
 	}
 
 	/**
@@ -310,7 +292,7 @@ class View implements ViewContract {
 	 */
 	protected function formatErrors($provider) {
 		return $provider instanceof MessageProvider
-		  ? $provider->getMessageBag() : new MessageBag((array)$provider);
+			? $provider->getMessageBag() : new MessageBag((array)$provider);
 	}
 
 	/**
@@ -332,10 +314,10 @@ class View implements ViewContract {
 			$compilers = $this->getCompilers($node);
 
 			foreach ($compilers as $compiler) {
-
 				list($fn, $node, $attribute) = $compiler;
-
-				$this->$fn($node, $attribute);
+				if (!(is_null($node->parentNode))) {
+					$this->$fn($node, $attribute);
+				}
 			}
 
 			if (count($compilers)) {
@@ -469,9 +451,7 @@ class View implements ViewContract {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		}
-
 	}
-
 
 	/**
 	 * Security using gates
@@ -486,7 +466,7 @@ class View implements ViewContract {
 		$activity = $this->attValue($attr); //because of a php debugging bug.
 		$value = $this->getCompilerParameter($node);
 
-		if ($gate::denies($activity,$value)) {
+		if ($gate::denies($activity, $value)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		};
@@ -536,11 +516,11 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function compileInclude(\DOMElement $node, \DOMAttr $attr) {
-		$params = $this->getCompilerParameter($node);
-		$data = $params ?? $this->data;
-		$include = $this->factory->make($this->attValue($attr), $data);
-		$this->document->set('.', $include->compile(), $node);
-		$this->deleteDescendants($node);
+			$params = $this->getCompilerParameter($node);
+			$data = $params ?? $this->data;
+			$include = $this->factory->make($this->attValue($attr), $data);
+			$this->document->set('.', $include->compile(), $node);
+			$this->deleteDescendants($node);
 	}
 
 	/**
@@ -568,7 +548,7 @@ class View implements ViewContract {
 	protected function compileRoute(\DOMElement $node, \DOMAttr $attr) {
 		$params = $this->getCompilerParameter($node);
 		$route = $this->attValue($attr);
-		$url = URL::route($route,$params);
+		$url = URL::route($route, $params);
 
 		$this->document->set('./@href', $url, $node);
 	}
@@ -780,7 +760,7 @@ class View implements ViewContract {
 	/**
 	 * @return Factory
 	 */
-	public function getFactory() : Factory {
+	public function getFactory(): Factory {
 		return $this->factory;
 	}
 
@@ -801,28 +781,28 @@ class View implements ViewContract {
 		 * Get the array of parameters, which are semi-colon delimited.
 		 * eg data-v.param="foo;bar;bim"
 		 */
-		$parameters = explode(';',$attribute);
+		$parameters = explode(';', $attribute);
 		/**
 		 * for each parameter found (to be passed)...
 		 */
-		foreach($parameters as $parameter) {
+		foreach ($parameters as $parameter) {
 			/**
 			 * find out if it has been explicitly named, by using a colon
 			 * eg data-v.param="foo;bar;bim:1121" the final parameter bim will hold the value 1121.
 			 */
-			$nameValue = explode(':',$parameter);
+			$nameValue = explode(':', $parameter);
 			/**
 			 * named parameters are not mandatory, so we need to see if this parameter is named.
 			 * Normally they are not.
 			 */
-			if(count($nameValue) < 2) { //no name/value division.
+			if (count($nameValue) < 2) { //no name/value division.
 				$result[] = data_get($data, $parameter);
 			} else {
-				$result[ $nameValue[0] ] = data_get($data, $nameValue[1]);
+				$result[$nameValue[0]] = data_get($data, $nameValue[1]);
 			}
 		}
 		//because we don't always want multi-values array, we may just want to respond with the first value.
-		return count($result) == 1? $result[0] : $result;
+		return count($result) == 1 ? $result[0] : $result;
 	}
 
 	/**
@@ -833,7 +813,7 @@ class View implements ViewContract {
 	 * @return mixed|string
 	 */
 	public function hasValue(string $attribute, array $data) {
-			return data_get($data, $attribute) !== null;
+		return data_get($data, $attribute) !== null;
 	}
 
 	/**
@@ -886,15 +866,15 @@ class View implements ViewContract {
 		$parts = array_map(function ($word) {
 			return studly_case($word);
 		}
-		  , explode('.', $name)
+			, explode('.', $name)
 		);
 		$paths = $this->config['controllers'];
-		$signature = array_shift($parts);					//get $paths[0]
-		if(array_key_exists($signature,$paths)) { //do we know about it?
-			return $paths[$signature] .'\\'. implode('\\', $parts);
+		$signature = array_shift($parts);          //get $paths[0]
+		if (array_key_exists($signature, $paths)) { //do we know about it?
+			return $paths[$signature] . '\\' . implode('\\', $parts);
 		}
-		array_unshift($parts,$signature);
-		return $paths["__default"] .'\\'. implode('\\', $parts);
+		array_unshift($parts, $signature);
+		return $paths["__default"] . '\\' . implode('\\', $parts);
 	}
 
 	/**
@@ -963,12 +943,11 @@ class View implements ViewContract {
 		return $value;
 	}
 
-	private function nodeAttrs(\DOMNode $node) : array {
+	private function nodeAttrs(\DOMNode $node): array {
 		return iterator_to_array($node->attributes);
 	}
 
-	private function attValue(\DOMAttr $attr) : string {
+	private function attValue(\DOMAttr $attr): string {
 		return $attr->nodeValue;
 	}
-
 }

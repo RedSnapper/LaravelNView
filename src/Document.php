@@ -67,6 +67,14 @@ class Document {
 	}
 
 	/**
+	 * return the DOMDocument, or null.
+	 * 'domDoc'
+	 */
+	public function domDoc() {
+		return $this->doc;
+	}
+
+	/**
 	 * 'show'
 	 */
 	public function show($whole_doc = false) {
