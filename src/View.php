@@ -7,6 +7,7 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\MessageProvider;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Contracts\View\View as ViewContract;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\MessageBag;
 
@@ -108,7 +109,8 @@ class View implements ViewContract {
 		'asset'      => 'Asset',
 		'child'      => 'ChildGap',
 		'replace'    => 'Replace',
-		'tr'         => 'Translations'
+		'tr'         => 'Translations',
+		'null'       => 'Null'
 	];
 
 	/**
@@ -452,6 +454,18 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * do nothing. just can use for stop.
+	 *
+	 * @param \DOMElement $node
+	 * @param \DOMAttr    $attr
+	 * @return void
+	 */
+	protected function compileNull(\DOMElement $node, \DOMAttr $attr): void {
+		$key = $this->attValue($attr);
+		$value = $this->getValue($key, $this->data);
+	}
+
+	/**
 	 * handle existence in data.
 	 *
 	 * @param \DOMElement $node
@@ -609,7 +623,12 @@ class View implements ViewContract {
 	protected function compileRoute(\DOMElement $node, \DOMAttr $attr): void {
 		$params = $this->getCompilerParameter($node);
 		$route = $this->attValue($attr);
-		$url = URL::route($route, $params);
+		$value = preg_replace_callback('/{([\d\w\.]+)}/', function ($matches) {
+			$value = $this->getValue($matches[1],$this->data);
+			return $value instanceof Model ? strtolower(class_basename($value)) : $value;
+		}, $route);
+
+		$url = URL::route($value, $params);
 
 		$this->document->set('./@href', $url, $node);
 	}
