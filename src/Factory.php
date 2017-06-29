@@ -9,11 +9,19 @@ use Illuminate\Contracts\Support\Arrayable;
 use InvalidArgumentException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Arr;
+use Illuminate\View\Engines\EngineResolver;
 
 use Illuminate\Contracts\View\Factory as FactoryContract;
 use Illuminate\Contracts\View\View as ViewContract;
 
 class Factory implements FactoryContract {
+
+	/**
+	 * The engine implementation.
+	 *
+	 * @var \Illuminate\View\Engines\EngineResolver
+	 */
+	protected $engines;
 
 	/**
 	 * The view finder implementation.
@@ -56,6 +64,7 @@ class Factory implements FactoryContract {
 	 * @param  \Illuminate\Contracts\Events\Dispatcher $events
 	 */
 	public function __construct(ViewFinderInterface $finder, Dispatcher $events) {
+		$this->engines = new EngineResolver();
 		$this->finder = $finder;
 		$this->events = $events;
 		$this->share('__env', $this);
@@ -73,7 +82,7 @@ class Factory implements FactoryContract {
 		$data = array_merge($mergeData, $this->parseData($data));
 
 		return tap($this->viewInstance($path, $path, $data), function ($view) {
-			$this->callCreator($view);
+			$this->callCreato($view);
 		});
 	}
 
@@ -283,6 +292,17 @@ class Factory implements FactoryContract {
 	public function creator($views, $callback) {
 		// TODO: Implement creator() method.
 	}
+
+	/**
+	 * Get the engine resolver instance.
+	 *
+	 * @return \Illuminate\View\Engines\EngineResolver
+	 */
+	public function getEngineResolver()
+	{
+		return $this->engines;
+	}
+
 
 	/**
 	 * Call the creator for a given view.
