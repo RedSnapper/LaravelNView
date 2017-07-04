@@ -91,26 +91,27 @@ class View implements ViewContract {
 	 * @var array
 	 */
 	protected $compilers = [
-		'attr'       => 'Attribute',
-		'container'  => 'Container',
-		'errors'     => 'Errors',
-		'auth'       => 'Auth',
-		'can'        => 'Can',
-		'cannot'     => 'Cannot',
-		'exists'     => 'Exists',
-		'empty'			 => 'NotExists',
-		'match'			 => 'Match',
-		'nomatch'		 => 'NoMatch',
-		'include'    => 'Include',
-		'pagination' => 'Pagination',
-		'foreach'    => 'ForEach',
-		'url'        => 'URL',
-		'route'      => 'Route',
-		'asset'      => 'Asset',
-		'child'      => 'ChildGap',
-		'replace'    => 'Replace',
-		'tr'         => 'Translations',
-		'null'       => 'Null'
+	  'attr'       => 'Attribute',
+	  'container'  => 'Container',
+	  'errors'     => 'Errors',
+	  'auth'       => 'Auth',
+	  'can'        => 'Can',
+	  'cannot'     => 'Cannot',
+	  'exists'     => 'Exists',
+	  'empty'      => 'NotExists',
+	  'match'      => 'Match',
+	  'nomatch'    => 'NoMatch',
+	  'include'    => 'Include',
+	  'pagination' => 'Pagination',
+	  'foreach'    => 'ForEach',
+	  'url'        => 'URL',
+	  'route'      => 'Route',
+	  'asset'      => 'Asset',
+	  'child'      => 'ChildGap',
+	  'replace'    => 'Replace',
+	  'tr'         => 'Translations',
+	  'null'       => 'Null',
+	  'dd'         => 'Dump'
 	];
 
 	/**
@@ -272,12 +273,10 @@ class View implements ViewContract {
 	 * @param MessageBag $provider
 	 * @return ViewContract
 	 */
-	public function withErrorBag(MessageBag $provider) : ViewContract
-	{
-		$this->with('errors',$provider);
+	public function withErrorBag(MessageBag $provider): ViewContract {
+		$this->with('errors', $provider);
 		return $this;
 	}
-
 
 	/**
 	 * Set a document at the specified xpath.
@@ -308,7 +307,7 @@ class View implements ViewContract {
 	 */
 	protected function formatErrors($provider) {
 		return $provider instanceof MessageProvider
-			? $provider->getMessageBag() : new MessageBag((array)$provider);
+		  ? $provider->getMessageBag() : new MessageBag((array)$provider);
 	}
 
 	/**
@@ -466,6 +465,17 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * Die and dump
+	 *
+	 * @param \DOMElement $node
+	 * @param \DOMAttr    $attr
+	 * @return void
+	 */
+	protected function compileDump(\DOMElement $node, \DOMAttr $attr): void {
+		dd($this->data);
+	}
+
+	/**
 	 * handle existence in data.
 	 *
 	 * @param \DOMElement $node
@@ -493,7 +503,7 @@ class View implements ViewContract {
 		}
 	}
 
-	private function matching(\DOMElement $node, \DOMAttr $attr) : bool {
+	private function matching(\DOMElement $node, \DOMAttr $attr): bool {
 		$valueToMatch = $this->getCompilerParameter($node);
 		$source = $this->attValue($attr);
 		$sourceValue = $this->getValue($source, $this->data);
@@ -508,11 +518,12 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function compileMatch(\DOMElement $node, \DOMAttr $attr): void {
-		if(!$this->matching($node,$attr)) {
+		if (!$this->matching($node, $attr)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		}
 	}
+
 	/**
 	 * don't match a value.
 	 *
@@ -521,12 +532,11 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function compileNoMatch(\DOMElement $node, \DOMAttr $attr): void {
-		if( $this->matching($node,$attr)) {
+		if ($this->matching($node, $attr)) {
 			$this->document->set('.', null, $node);
 			$this->deleteDescendants($node);
 		}
 	}
-
 
 	/**
 	 * Security using gates
@@ -591,11 +601,11 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function compileInclude(\DOMElement $node, \DOMAttr $attr): void {
-			$params = $this->getCompilerParameter($node);
-			$data = $params == "" ? $this->data : $params;
-			$include = $this->factory->make($this->attValue($attr), $data);
-			$this->document->set('.', $include->compile(), $node);
-			$this->deleteDescendants($node);
+		$params = $this->getCompilerParameter($node);
+		$data = $params == "" ? $this->data : $params;
+		$include = $this->factory->make($this->attValue($attr), $data);
+		$this->document->set('.', $include->compile(), $node);
+		$this->deleteDescendants($node);
 	}
 
 	/**
@@ -624,7 +634,7 @@ class View implements ViewContract {
 		$params = $this->getCompilerParameter($node);
 		$route = $this->attValue($attr);
 		$value = preg_replace_callback('/{([\d\w\.]+)}/', function ($matches) {
-			$value = $this->getValue($matches[1],$this->data);
+			$value = $this->getValue($matches[1], $this->data);
 			return $value instanceof Model ? strtolower(class_basename($value)) : $value;
 		}, $route);
 
@@ -755,7 +765,7 @@ class View implements ViewContract {
 	 * If we have a child set then we need to first insert child into
 	 * the document in the appropriate content sections before parsing the rest of the document
 	 */
-	protected function renderChildren() : void {
+	protected function renderChildren(): void {
 
 		if (!$this->hasChild()) {
 			return;
@@ -946,7 +956,7 @@ class View implements ViewContract {
 		$parts = array_map(function ($word) {
 			return studly_case($word);
 		}
-			, explode('.', $name)
+		  , explode('.', $name)
 		);
 		$paths = $this->config['controllers'];
 		$signature = array_shift($parts);          //get $paths[0]
@@ -1019,7 +1029,7 @@ class View implements ViewContract {
 	 */
 	private function getCompilerParameter(\DOMElement $node) {
 		$param = @$this->getNodeAttribute($node, 'param');
-		if($param=="") {
+		if ($param == "") {
 			$value = @$this->getNodeAttribute($node, 'literal');
 		} else {
 			$value = $this->getValue($param, $this->data);
