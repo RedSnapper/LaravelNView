@@ -448,7 +448,8 @@ class Document {
 													switch ($gap) {
 														case self::GAP_DATA:
 														case self::GAP_NONE: {
-															if (!$this->isNullOrEmpty($value)) {
+															// Removes an attribute if it is null
+															if (!is_null($value)) {
 																$entry->setAttribute($aName, $value);
 															} else {
 																$entry->removeAttribute($aName);
