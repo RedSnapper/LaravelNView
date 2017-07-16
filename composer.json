@@ -22,5 +22,8 @@
             "name": "Red Snapper Development Team",
             "email": "contact@redsnapper.net"
         }
-    ]
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^6.2"
+    }
 }
