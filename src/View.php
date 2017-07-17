@@ -855,6 +855,13 @@ class View implements ViewContract {
 	}
 
 	/**
+	 * @return array
+	 */
+	public function getData(): array {
+		return $this->data;
+	}
+
+	/**
 	 * Get value(s) from the data based on dot notation.
 	 * This allows for a semi-colon delimited [name:]value array.
 	 *

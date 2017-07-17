@@ -342,7 +342,7 @@ class Document {
 									$value = $value->documentElement;
 								}
 								if (isset($aName) && (gettype($value) != "object")) { //prepare attribute.
-									$value = $this->xmlenc(strval($value));
+									//$value = $this->xmlenc(strval($value));
 								}
 								//Now we have the value set.
 								foreach ($entries as $entry) {
@@ -444,6 +444,7 @@ class Document {
 												$node = $this->doc->importNode($nodc, true);
 											}
 											if (isset($aName)) {
+												//$value = $this->xmlenc($value);
 												if ($entry->nodeType == XML_ELEMENT_NODE) {
 													switch ($gap) {
 														case self::GAP_DATA:
