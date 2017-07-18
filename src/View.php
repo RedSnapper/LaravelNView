@@ -899,7 +899,7 @@ class View implements ViewContract {
 			}
 		}
 		//because we don't always want multi-values array, we may just want to respond with the first value.
-		return count($result) == 1 ? $result[0] : $result;
+		return count($result) == 1 && isset($result[0]) ? $result[0] : $result;
 	}
 
 	/**
