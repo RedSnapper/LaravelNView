@@ -109,6 +109,7 @@ class View implements ViewContract {
 	  'asset'      => 'Asset',
 	  'child'      => 'ChildGap',
 	  'replace'    => 'Replace',
+	  'str'        => 'String',
 	  'tr'         => 'Translations',
 	  'null'       => 'Null',
 	  'dd'         => 'Dump'
@@ -129,7 +130,6 @@ class View implements ViewContract {
 		$this->config = $this->container['config']['view'];
 		$this->viewName = $viewName;
 		$this->data = $data instanceof Arrayable ? $data->toArray() : (array)$data;
-
 		$this->loadViewController($this->viewName);
 	}
 
@@ -450,6 +450,19 @@ class View implements ViewContract {
 		$key = $this->attValue($attr);
 		$value = $this->getValue($key, $this->data);
 		$this->document->set('.', $value, $node);
+	}
+
+	/**
+	 * Replaces the node with escaped string
+	 *
+	 * @param \DOMElement $node
+	 * @param \DOMAttr    $attr
+	 * @return void
+	 */
+	protected function compileString(\DOMElement $node, \DOMAttr $attr): void {
+		$key = $this->attValue($attr);
+		$value = $this->getValue($key, $this->data);
+		$this->document->set('.', e($value), $node);
 	}
 
 	/**
