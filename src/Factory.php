@@ -441,4 +441,13 @@ class Factory implements FactoryContract {
 		});
 	}
 
+	/**
+	 * Needed by laravel.
+	 *
+	 */
+	public function flushFinderCache(){
+		$factory = $this->getBladeFactory();
+		$factory->flushFinderCache();
+	}
+
 }
