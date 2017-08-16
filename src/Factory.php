@@ -2,6 +2,7 @@
 
 namespace RS\NView;
 
+use Illuminate\Support\Str;
 use Illuminate\View\ViewFinderInterface;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\View\ViewName;
@@ -10,7 +11,6 @@ use InvalidArgumentException;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Arr;
 use Illuminate\View\Engines\EngineResolver;
-
 use Illuminate\Contracts\View\Factory as FactoryContract;
 use Illuminate\Contracts\View\View as ViewContract;
 
@@ -58,6 +58,25 @@ class Factory implements FactoryContract {
 	protected $cache = [];
 
 	/**
+	 * Blade Factory
+	 * @var FactoryContract|null
+	 */
+	protected $bladeFactory;
+
+	/**
+	 * The extension to engine bindings.
+	 *
+	 * @var array
+	 */
+	protected $extensions = [
+	  'blade.php' => 'blade',
+	  'php' => 'blade',
+	  'css' => 'blade',
+	  'xml' => 'nview',
+	  'ixml'=> 'nview'
+	];
+
+	/**
 	 * Create a new view factory instance.
 	 *
 	 * @param  \Illuminate\View\ViewFinderInterface    $finder
@@ -82,7 +101,7 @@ class Factory implements FactoryContract {
 		$data = array_merge($mergeData, $this->parseData($data));
 
 		return tap($this->viewInstance($path, $path, $data), function ($view) {
-			$this->callCreato($view);
+			$this->callCreator($view);
 		});
 	}
 
@@ -102,10 +121,23 @@ class Factory implements FactoryContract {
 			$document = $this->finder->find(
 			  $viewName = $this->normalizeName($viewName)
 			);
-		} else {
-			$document = $viewName;
-			$viewName = null;
+
+			// Default laravel engine or nview engine
+			$engine = $this->getEngineFromPath($document);
+
+			if($engine =="nview"){
+				return $this->makeView($viewName,$document,$data,$mergeData);
+			}else{
+				return $this->makeBlade($viewName,$data,$mergeData);
+			}
+
 		}
+
+		return $this->makeView(null,$viewName,$data,$mergeData);
+
+	}
+
+	protected function makeView($viewName,$document,$data = [], $mergeData = []){
 
 		// Next, we will create the view instance and call the view creator for the view
 		// which can set any data, etc. Then we will return the view instance back to
@@ -115,6 +147,45 @@ class Factory implements FactoryContract {
 		return tap($this->viewInstance($viewName, $document, $data), function ($view) {
 			$this->callCreator($view);
 		});
+	}
+
+	protected function makeBlade($viewName,$data = [], $mergeData = []){
+
+		$factory = $this->getBladeFactory();
+
+		return $factory->make($viewName,$data,$mergeData);
+	}
+
+	protected function getBladeFactory():FactoryContract{
+
+		if(!isset($this->bladeFactory)){
+			$this->bladeFactory = new \Illuminate\View\Factory(
+			  $this->container->make('view.engine.resolver'),
+			  $this->finder,
+			  $this->getDispatcher()
+			);
+		}
+
+		return $this->bladeFactory;
+	}
+
+	/**
+	 * Get the appropriate view engine for the given path.
+	 *
+	 * @param  string  $path
+	 * @return \Illuminate\View\Engines\EngineInterface
+	 *
+	 * @throws \InvalidArgumentException
+	 */
+	public function getEngineFromPath($path)
+	{
+		if (! $extension = $this->getExtension($path)) {
+			throw new InvalidArgumentException("Unrecognized extension in file: $path");
+		}
+
+		$engine = $this->extensions[$extension];
+
+		return $engine;
 	}
 
 	/**
@@ -353,6 +424,21 @@ class Factory implements FactoryContract {
 	 */
 	public function getDocument(string $name){
 		return new Document($this->cache[$name]);
+	}
+
+	/**
+	 * Get the extension used by the view file.
+	 *
+	 * @param  string  $path
+	 * @return string
+	 */
+	protected function getExtension($path)
+	{
+		$extensions = array_keys($this->extensions);
+
+		return Arr::first($extensions, function ($value) use ($path) {
+			return Str::endsWith($path, '.'.$value);
+		});
 	}
 
 }

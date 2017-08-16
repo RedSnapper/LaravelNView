@@ -617,7 +617,11 @@ class View implements ViewContract {
 		$params = $this->getCompilerParameter($node);
 		$data = $params == "" ? $this->data : $params;
 		$include = $this->factory->make($this->attValue($attr), $data);
-		$this->document->set('.', $include->compile(), $node);
+
+		// This may be a blade file or an nview file
+		$result = $include instanceof self ? $include->compile() : $include->render();
+
+		$this->document->set('.', $result, $node);
 		$this->deleteDescendants($node);
 	}
 
