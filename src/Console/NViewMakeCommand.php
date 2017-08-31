@@ -59,7 +59,7 @@ class NViewMakeCommand extends Command {
 	}
 
 
-	public function fire() : bool {
+	public function handle() : bool {
 
 		$name = $this->getNameInput();
 
