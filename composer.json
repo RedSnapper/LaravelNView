@@ -1,26 +1,24 @@
 {
-    "name": "rs/nview-laravel",
-    "description": "Laravel NView",
-    "minimum-stability": "dev",
-    "require": {
-        "php": "^7.0",
-        "illuminate/filesystem": "5.4.*",
-        "illuminate/view": "5.4.*",
-        "illuminate/container": "5.4.*",
-        "illuminate/contracts": "5.4.*",
-        "illuminate/events": "5.4.*",
-        "illuminate/support": "5.4.*",
-        "illuminate/console": "5.4.*"
-    },
-    "autoload": {
-        "psr-4": {
-            "RS\\NView\\": "src"
-        }
-    },
-    "authors": [
-        {
-            "name": "Red Snapper Development Team",
-            "email": "contact@redsnapper.net"
-        }
-    ]
+	"name": "rs/nview-laravel",
+	"description": "Laravel NView",
+	"minimum-stability": "dev",
+	"require": {
+		"php": "^7.0",
+		"illuminate/filesystem": "5.5.*",
+		"illuminate/view": "5.5.*",
+		"illuminate/container": "5.5.*",
+		"illuminate/contracts": "5.5.*",
+		"illuminate/events": "5.5.*",
+		"illuminate/support": "5.5.*",
+		"illuminate/console": "5.5.*"
+	},
+	"autoload": {
+		"psr-4": {
+			"RS\\NView\\": "src"
+		}
+	},
+	"authors": [{
+		"name": "Red Snapper Development Team",
+		"email": "contact@redsnapper.net"
+	}]
 }
