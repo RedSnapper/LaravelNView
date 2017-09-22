@@ -497,8 +497,7 @@ class View implements ViewContract {
 	 */
 	protected function compileExists(\DOMElement $node, \DOMAttr $attr): void {
 		if (!$this->hasValue($this->attValue($attr), $this->data)) {
-			$this->document->set('.', null, $node);
-			$this->deleteDescendants($node);
+			$this->removeNode($node);
 		}
 	}
 
@@ -511,8 +510,7 @@ class View implements ViewContract {
 	 */
 	protected function compileNotExists(\DOMElement $node, \DOMAttr $attr): void {
 		if ($this->hasValue($this->attValue($attr), $this->data)) {
-			$this->document->set('.', null, $node);
-			$this->deleteDescendants($node);
+            $this->removeNode($node);
 		}
 	}
 
@@ -532,8 +530,7 @@ class View implements ViewContract {
 	 */
 	protected function compileMatch(\DOMElement $node, \DOMAttr $attr): void {
 		if (!$this->matching($node, $attr)) {
-			$this->document->set('.', null, $node);
-			$this->deleteDescendants($node);
+			$this->removeNode($node);
 		}
 	}
 
@@ -546,8 +543,7 @@ class View implements ViewContract {
 	 */
 	protected function compileNoMatch(\DOMElement $node, \DOMAttr $attr): void {
 		if ($this->matching($node, $attr)) {
-			$this->document->set('.', null, $node);
-			$this->deleteDescendants($node);
+            $this->removeNode($node);
 		}
 	}
 
@@ -565,8 +561,7 @@ class View implements ViewContract {
 		$value = $this->getCompilerParameter($node);
 
 		if ($gate::denies($activity, $value)) {
-			$this->document->set('.', null, $node);
-			$this->deleteDescendants($node);
+            $this->removeNode($node);
 		};
 	}
 
@@ -584,8 +579,7 @@ class View implements ViewContract {
 		$value = $this->getCompilerParameter($node);
 
 		if ($gate::allows($activity, $value)) {
-			$this->document->set('.', null, $node);
-			$this->deleteDescendants($node);
+            $this->removeNode($node);
 		};
 	}
 
@@ -601,8 +595,7 @@ class View implements ViewContract {
 		$auth = $this->container->make('Auth');
 
 		if ($auth::check() != filter_var($this->attValue($attr), FILTER_VALIDATE_BOOLEAN)) {
-			$this->document->set('.', null, $node);
-			$this->deleteDescendants($node);
+            $this->removeNode($node);
 		}
 	}
 
@@ -831,7 +824,8 @@ class View implements ViewContract {
 	 * @param \DOMElement $node
 	 */
 	protected function removeNode(\DOMElement $node): void {
-		$this->document->set(".", null, $node);
+        $this->deleteDescendants($node);
+	    $this->document->set(".", null, $node);
 	}
 
 	/**
