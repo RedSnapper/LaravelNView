@@ -931,11 +931,15 @@ class View implements ViewContract {
 	 * @return void
 	 */
 	protected function loadViewController($viewName): void {
-		/**
+
+	    /**
 		 * First check if we have a controller declared in our view
 		 * Or try and load an associated controller by view name
 		 */
 		if ($controller = $this->document->get("/*/@{$this->prefix}controller")) {
+
+		    $this->document->set("/*/@{$this->prefix}controller");// Delete the attribute
+
 			$this->loadViewControllerClass($controller);
 		} else {
 			$this->loadViewControllerClass($viewName);
@@ -950,9 +954,9 @@ class View implements ViewContract {
 	 */
 	protected function loadViewControllerClass(string $name = null): bool {
 
-		if (is_null($name)) {
-			return false;
-		}
+        if (is_null($name)) {
+            return false;
+        }
 
 		$class = $this->getViewControllerClassName($name);
 		if ($exists = class_exists($class)) {
