@@ -15,7 +15,8 @@ use Illuminate\Contracts\View\Factory as FactoryContract;
 use Illuminate\Contracts\View\View as ViewContract;
 
 class Factory implements FactoryContract {
-
+	
+	use ManagesLoops;
 	/**
 	 * The engine implementation.
 	 *
