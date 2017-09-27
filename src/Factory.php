@@ -3,6 +3,7 @@
 namespace RS\NView;
 
 use Illuminate\Support\Str;
+use Illuminate\View\Concerns\ManagesLoops;
 use Illuminate\View\ViewFinderInterface;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\View\ViewName;
