@@ -3,6 +3,7 @@
 namespace RS\NView;
 
 use Illuminate\Support\Str;
+use Illuminate\View\Concerns\ManagesComponents;
 use Illuminate\View\Concerns\ManagesLoops;
 use Illuminate\View\ViewFinderInterface;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -18,7 +19,7 @@ use Illuminate\Contracts\View\View as ViewContract;
 class Factory implements FactoryContract
 {
 
-    use ManagesLoops;
+    use ManagesLoops,ManagesComponents;
     /**
      * The engine implementation.
      *
