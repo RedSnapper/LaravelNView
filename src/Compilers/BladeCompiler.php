@@ -14,7 +14,7 @@ class BladeCompiler extends \Illuminate\View\Compilers\BladeCompiler
     {
         $expression = $this->stripParentheses($expression);
 
-        return "<?php echo view({$expression}, array_except(get_defined_vars(), array('__data', '__path')))->renderView(false); ?>";
+        return "<?php echo view({$expression}, array_except(get_defined_vars(), array('__data', '__path')))->render(); ?>";
     }
 
 
