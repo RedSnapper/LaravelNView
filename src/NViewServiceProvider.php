@@ -7,7 +7,7 @@ use Illuminate\View\FileViewFinder;
 use RS\NView\Console\NViewMakeCommand;
 use RS\NView\Console\NViewControllerMakeCommand;
 use Illuminate\View\Engines\{EngineResolver,FileEngine,CompilerEngine,PhpEngine};
-use Illuminate\View\Compilers\BladeCompiler;
+use RS\NView\Compilers\BladeCompiler;
 
 class NViewServiceProvider extends ServiceProvider {
 
@@ -47,8 +47,9 @@ class NViewServiceProvider extends ServiceProvider {
 		$this->app->singleton('view', function ($app) {
 
 			$finder = $app['view.finder'];
+            $resolver = $app['view.engine.resolver'];
 
-			$env = new Factory($finder, $app['events']);
+			$env = new Factory($resolver,$finder, $app['events']);
 
 			// We will also set the container instance on this view environment since the
 			// view composers may be classes registered in the container, which allows
@@ -141,6 +142,7 @@ class NViewServiceProvider extends ServiceProvider {
 		$resolver->register('blade', function () {
 			return new CompilerEngine($this->app['blade.compiler']);
 		});
+
 	}
 
 }

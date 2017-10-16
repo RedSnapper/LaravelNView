@@ -149,15 +149,18 @@ class View implements ViewContract {
 	 * @return string
 	 */
 	public function render(): string {
-
-		$this->data = $this->gatherData();
-
-		$document = $this->compile();
-
-		$this->tidy();
-
-		return $document->show(true);
+	    return $this->renderView();
 	}
+
+	public function renderView($doc = true){
+        $this->data = $this->gatherData();
+
+        $document = $this->compile();
+
+        $this->tidy();
+
+        return $document->show($doc);
+    }
 
 	/**
 	 * Run all compilers on the view
