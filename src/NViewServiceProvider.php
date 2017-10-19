@@ -71,7 +71,7 @@ class NViewServiceProvider extends ServiceProvider {
 	 */
 	public function registerViewFinder() {
 		$this->app->bind('view.finder', function ($app) {
-			return new FileViewFinder($app['files'], $app['config']['view.paths'],['xml','ixml','php','css','blade.php']);
+			return new FileViewFinder($app['files'], $app['config']['view.paths'],['xml','ixml','php','css','blade.php','blade']);
 		});
 	}
 

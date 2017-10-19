@@ -79,6 +79,7 @@ class Factory implements FactoryContract
      * @var array
      */
     protected $extensions = [
+      'blade'     => 'blade',
       'blade.php' => 'blade',
       'php'       => 'blade',
       'css'       => 'blade',
@@ -88,11 +89,12 @@ class Factory implements FactoryContract
 
     /**
      * Create a new view factory instance.
-     * @param  \Illuminate\View\Engines\EngineResolver  $engines
+     *
+     * @param  \Illuminate\View\Engines\EngineResolver $engines
      * @param  \Illuminate\View\ViewFinderInterface    $finder
      * @param  \Illuminate\Contracts\Events\Dispatcher $events
      */
-    public function __construct(EngineResolver $engines,ViewFinderInterface $finder, Dispatcher $events)
+    public function __construct(EngineResolver $engines, ViewFinderInterface $finder, Dispatcher $events)
     {
         $this->engines = $engines;
         $this->finder = $finder;
@@ -178,6 +180,7 @@ class Factory implements FactoryContract
               $this->finder,
               $this->getDispatcher()
             );
+            $this->bladeFactory->addExtension("blade","blade");
         }
 
         return $this->bladeFactory;
