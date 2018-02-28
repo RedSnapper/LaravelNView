@@ -4,13 +4,13 @@
 	"minimum-stability": "dev",
 	"require": {
 		"php": "^7.0",
-		"illuminate/filesystem": "5.6.*",
-		"illuminate/view": "5.6.*",
-		"illuminate/container": "5.6.*",
-		"illuminate/contracts": "5.6.*",
-		"illuminate/events": "5.6.*",
-		"illuminate/support": "5.6.*",
-		"illuminate/console": "5.6.*"
+		"illuminate/filesystem": "5.4.*",
+		"illuminate/view": "5.4.*",
+		"illuminate/container": "5.4.*",
+		"illuminate/contracts": "5.4.*",
+		"illuminate/events": "5.4.*",
+		"illuminate/support": "5.4.*",
+		"illuminate/console": "5.4.*"
 	},
 	"autoload": {
 		"psr-4": {
